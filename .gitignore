@@ -213,3 +213,25 @@ __marimo__/
 # Manba fayllar — mijoz bergan asl kitob va hujjatlar (~145 MB).
 # Saytga chiqqan nusxalari media/ da turadi, shuning uchun bularni gitga solish shart emas.
 malumotlar/
+
+# --- Production (2026-09-09) ---
+# Har bir serverning o'z sozlamasi. Namuna: .env.namuna (u git'ga kiradi).
+.env
+# Serverga ko'chiriladigan tayyor nusxa (u yerda nomi `.env` bo'ladi).
+.env.server
+# SECRET_KEY sayt birinchi ishga tushganda shu yerda o'zi yaratiladi.
+.secret_key
+# Xato jurnallari.
+logs/
+# Claude Code'ning shu mashinaga xos lokal sozlamasi (ichida shu kompyuter yo'llari).
+.claude/settings.local.json
+
+# Baza zaxira nusxalari (avtomatik olinadi, git'ga kirmaydi).
+zaxira/
+
+# --- Ish stoli ilovasi (.exe) ---
+# Manba (ilova.py, qur.py, belgi.ico, manzil.txt) git'ga kiradi;
+# qurish muhiti va yig'ilgan fayllar — yo'q (har safar qayta yaratiladi).
+ilova/qurish-env/
+ilova/build/
+ilova/dist/

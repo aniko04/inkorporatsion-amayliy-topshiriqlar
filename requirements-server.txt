@@ -1,0 +1,11 @@
+# Serverda ishlatish uchun qo'shimcha paket.
+# Avval asosiylarini o'rnating:  python -m pip install -r requirements.txt
+# So'ng:                          python -m pip install -r requirements-server.txt
+#
+# `manage.py runserver` — faqat ishlab chiqish uchun mo'ljallangan: bitta oqim,
+# xavfsizlik va yuk uchun sinalmagan. Waitress esa toza Python'da yozilgan,
+# Windows'da ham Linux'da ham bir xil ishlaydigan WSGI server. Ishga tushirish:
+#     python -m waitress --listen=127.0.0.1:8000 --threads=8 core.wsgi:application
+# Batafsil: DEPLOY.md
+
+waitress==3.0.2

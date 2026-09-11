@@ -1,0 +1,51 @@
+========================================================
+  INKORPORATSION AMALIY TOPSHIRIQLAR — ish stoli ilovasi
+========================================================
+
+Bu papkadagi «Inkorporatsion amaliy topshiriqlar.exe» faylini
+istalgan Windows kompyuterga ko'chiring va ikki marta bosing.
+Sayt alohida oynada ochiladi.
+
+O'RNATISH SHART EMAS.
+Python, Django yoki boshqa dastur kerak emas — hammasi .exe
+ichida. Windows 10 va Windows 11 da ishlaydi.
+
+
+NIMALAR ISHLAYDI
+----------------
+Sayt Windows'ning o'z brauzer dvigateli (Edge WebView2 —
+Chromium) ichida ochilgani uchun HAMMA NARSA brauzerdagidek
+ishlaydi:
+
+  * krossvordlar, testlar, taymer va boshqa JavaScript ishlari
+  * videolar (Instruksion texnologik xarita sahifalari)
+  * PDF ko'ruvchi («Ko'rish» tugmasi)
+  * fayl yuklab olish («Yuklab olish» tugmasi)
+  * tizimga kirish — bir marta kirsangiz, ilovani yopib qayta
+    ochganingizda ham kirilgan holda qolasiz
+
+
+SAYT MANZILINI O'ZGARTIRISH
+---------------------------
+Ilova yonidagi «manzil.txt» faylini oddiy Bloknot (Notepad)
+da oching va manzilni yozing. Ilova ro'yxatdagi manzillarni
+yuqoridan pastga tekshiradi va ISHLAYOTGAN BIRINCHISINI
+ochadi.
+
+Ikkala fayl — .exe va manzil.txt — BIR PAPKADA turishi kerak.
+manzil.txt o'chirilsa, ilova ichidagi standart manzillardan
+foydalanadi.
+
+
+AGAR ISHLAMASA
+--------------
+1) «Saytga ulanib bo'lmadi» degan oyna chiqsa — internet
+   aloqasini tekshiring va «Qayta urinish» ni bosing.
+
+2) «Edge WebView2 Runtime topilmadi» degan xabar chiqsa —
+   quyidagi manzildan bepul yuklab o'rnating:
+   https://go.microsoft.com/fwlink/p/?LinkId=2124703
+   (Windows 11 va yangilangan Windows 10 da u allaqachon bor.)
+
+3) Antivirus ogohlantirsa — bu imzolanmagan yangi .exe
+   uchun odatiy hol. Fayl xavfsiz; «Run anyway» ni tanlang.

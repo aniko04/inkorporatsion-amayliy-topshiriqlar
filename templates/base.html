@@ -3,8 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Inkorporatsion topshiriqlar platformasi{% endblock %}</title>
+    <title>{% block title %}Inkorporatsion amaliy topshiriqlar platformasi{% endblock %}</title>
     <meta name="description" content="{% block description %}Boshlang'ich sinf texnologiya fanini inkorporatsion yondashuv asosida o'qitishni qo'llab-quvvatlovchi elektron metodik platforma.{% endblock %}">
+
+    {% comment %}
+        ===== QIDIRUV TIZIMLARI VA IJTIMOIY TARMOQLAR =====
+
+        `og:` teglari — havola Telegram, Facebook yoki boshqa joyga tashlanganda
+        chiqadigan ko'rinish (rasm + sarlavha + tavsif). Ularsiz havola quruq
+        manzil bo'lib qoladi.
+
+        `sayt_asos` — saytning to'liq manzili (masalan `https://texnoedu.uz`),
+        `home/kontekst.py` beradi. Qattiq yozilmagan: sayt aniko.uz da ham,
+        texnoedu.uz da ham ishlaydi va har biri o'z domenini ko'rsatadi.
+        `request.scheme` EMASligi muhim — nginx orqasida u "http" qaytaradi,
+        natijada og:image HTTPS sahifada HTTP bo'lib qolardi (izohi o'sha faylda).
+
+        `og_title`/`og_description` alohida bloklar: Django bitta shablonda
+        bir blokni IKKI MARTA ishlatishga ruxsat bermaydi, shuning uchun
+        `title` ni bu yerda qayta chaqirib bo'lmaydi. Sahifa o'z sarlavhasini
+        bersa, o'sha sahifada shu ikki blok ham qayta yoziladi (bolim.html ga
+        qarang) — aks holda saytning umumiy matni ishlatiladi.
+    {% endcomment %}
+    <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
+    <meta name="author" content="Jo'rayeva Dilnoz Raxmidinovna">
+    <meta name="keywords" content="{% block keywords %}inkorporatsion amaliy topshiriqlar, texnologiya fani, boshlang'ich sinf, inkorporatsion yondashuv, metodika, dars ishlanma, texnologik xarita, origami, applikatsiya, kvilling, interaktiv topshiriq{% endblock %}">
+    <meta name="theme-color" content="#2E7DE0">
+    <link rel="canonical" href="{{ sayt_asos }}{{ request.path }}">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Inkorporatsion amaliy topshiriqlar platformasi">
+    <meta property="og:locale" content="uz_UZ">
+    <meta property="og:url" content="{{ sayt_asos }}{{ request.path }}">
+    <meta property="og:title" content="{% block og_title %}Inkorporatsion amaliy topshiriqlar platformasi{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Boshlang'ich sinf texnologiya fanini inkorporatsion yondashuv asosida o'qitishni qo'llab-quvvatlovchi elektron metodik platforma.{% endblock %}">
+    <meta property="og:image" content="{{ sayt_asos }}{% block og_image %}/static/img/og.jpg{% endblock %}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Inkorporatsion amaliy topshiriqlar — boshlang'ich sinf texnologiya fani platformasi">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}Inkorporatsion amaliy topshiriqlar platformasi{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Boshlang'ich sinf texnologiya fanini inkorporatsion yondashuv asosida o'qitishni qo'llab-quvvatlovchi elektron metodik platforma.{% endblock %}">
+    <meta name="twitter:image" content="{{ sayt_asos }}/static/img/og.jpg">
+
     <link rel="icon" href="/static/img/favicon.ico" sizes="48x48">
     <link rel="icon" type="image/png" href="/static/img/favicon-32.png" sizes="32x32">
     <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
@@ -13,7 +55,7 @@
         stilni tahrirlaganda ham manzil o'zgarmaydi va brauzer eski nusxada
         qolib ketadi. platform.css ni o'zgartirsangiz raqamni oshiring.
     {% endcomment %}
-    <link rel="stylesheet" href="/static/css/platform.css?v=54">
+    <link rel="stylesheet" href="/static/css/platform.css?v=56">
     {% comment %}
         Shriftlar bloklamasdan yuklanadi: `media="print"` bo'lgani uchun
         brauzer uni kutmaydi, yuklangach `onload` bilan `all` ga o'tadi.
@@ -62,7 +104,7 @@
                 <img class="brand-logo" src="/static/img/logo.png" alt="" width="256" height="256">
                 <span class="brand-text">
                     <span class="brand-sub">Inkorporatsion</span>
-                    <span class="brand-name">Topshiriqlar</span>
+                    <span class="brand-name">Amaliy topshiriqlar</span>
                 </span>
             </a>
 
@@ -101,8 +143,46 @@
 
             <div class="nav-auth">
                 {% if user.is_authenticated %}
-                    <span class="nav-user">{{ user.first_name|default:user.username }}</span>
-                    <a href="/logout" class="btn-nav ghost">Chiqish</a>
+                    {% if user.is_staff %}
+                        {% comment %}
+                            Administrator uchun ism o'zi menyuga aylanadi: ichida
+                            «O'quvchilarim», boshqaruv paneli va chiqish turadi.
+                            Navbarga sakkizinchi havola QO'SHILMAYDI — u bir qatorga
+                            millimetrigacha o'lchab sig'dirilgan (platform.css dagi
+                            `.topbar .wrap` jadvaliga qarang), yangi tugma esa
+                            «Chiqish» ni qirqib yuborardi. Shu sababli «Chiqish»
+                            menyu ichiga ko'chdi: kenglik ortmadi, aksincha kamaydi.
+                            Oddiy foydalanuvchining navbari o'zgarmagan.
+                        {% endcomment %}
+                        <div class="nav-hisob" id="nav-hisob">
+                            <button class="hisob-tugma" type="button" id="hisob-tugma"
+                                    aria-expanded="false" aria-haspopup="true" aria-controls="hisob-menyu">
+                                <span class="hisob-harf" aria-hidden="true">{{ user.first_name|default:user.username|first|upper }}</span>
+                                <span class="hisob-ism">{{ user.first_name|default:user.username }}</span>
+                                <svg class="nav-strelka" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                            <div class="hisob-menyu" id="hisob-menyu">
+                                <div class="hisob-menyu-ichi">
+                                    <span class="hisob-yorliq">Administrator</span>
+                                    <a href="/oquvchilarim"{% if active == 'oquvchilarim' %} class="is-active" aria-current="page"{% endif %}>
+                                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 20v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11"/></svg>
+                                        O'quvchilarim
+                                    </a>
+                                    <a href="/admin/">
+                                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+                                        Boshqaruv paneli
+                                    </a>
+                                    <a href="/logout" class="hisob-chiqish">
+                                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                                        Chiqish
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <span class="nav-user">{{ user.first_name|default:user.username }}</span>
+                        <a href="/logout" class="btn-nav ghost">Chiqish</a>
+                    {% endif %}
                 {% else %}
                     <a href="/login" class="btn-nav">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -123,7 +203,7 @@
                 <div>
                     <div class="footer-brand">
                         <img class="brand-logo" src="/static/img/logo.png" alt="" width="256" height="256">
-                        <span>Inkorporatsion topshiriqlar</span>
+                        <span>Inkorporatsion amaliy topshiriqlar</span>
                     </div>
                     <p>
                         Boshlang'ich sinf texnologiya fanini inkorporatsion yondashuv asosida
@@ -146,6 +226,9 @@
                         <li><a href="/topshiriq">Topshiriq</a></li>
                         <li><a href="/xarita">Instruksion texnologik xarita</a></li>
                         <li><a href="/ishlanma">Dars ishlanmalar</a></li>
+                        {% if user.is_staff %}
+                            <li><a href="/oquvchilarim">O'quvchilarim</a></li>
+                        {% endif %}
                         {% if user.is_authenticated %}
                             <li><a href="/logout">Chiqish</a></li>
                         {% else %}
@@ -155,7 +238,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>&copy; {% now "Y" %} Inkorporatsion topshiriqlar platformasi</span>
+                <span>&copy; {% now "Y" %} Inkorporatsion amaliy topshiriqlar platformasi</span>
                 <span>Boshlang'ich ta'lim &middot; Texnologiya fani</span>
             </div>
         </div>
@@ -175,6 +258,35 @@
                 auth.classList.toggle('collapsed', !ochiq);
                 tugma.setAttribute('aria-expanded', ochiq ? 'true' : 'false');
                 tugma.setAttribute('aria-label', ochiq ? 'Menyuni yopish' : 'Menyuni ochish');
+            });
+        })();
+
+        // Administrator hisobi menyusi (navbardagi ism). Faqat bosish bilan
+        // ochiladi — «Topshiriq» dagidek hover EMAS: ichida «Chiqish» bor,
+        // uni sichqoncha tasodifan ustidan o'tganda ochib qo'yish yaramaydi.
+        (function () {
+            var quti = document.getElementById('nav-hisob');
+            if (!quti) return;
+            var tugma = document.getElementById('hisob-tugma');
+
+            function yopish() {
+                quti.classList.remove('ochiq');
+                tugma.setAttribute('aria-expanded', 'false');
+            }
+
+            tugma.addEventListener('click', function (h) {
+                h.stopPropagation();
+                var ochiq = quti.classList.toggle('ochiq');
+                tugma.setAttribute('aria-expanded', ochiq ? 'true' : 'false');
+            });
+            document.addEventListener('click', function (h) {
+                if (!quti.contains(h.target)) yopish();
+            });
+            document.addEventListener('keydown', function (h) {
+                if (h.key === 'Escape' && quti.classList.contains('ochiq')) {
+                    yopish();
+                    tugma.focus();
+                }
             });
         })();
     </script>

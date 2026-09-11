@@ -55,10 +55,14 @@ RASM_VERSIYA = 1         # rasm o'sha nom bilan almashtirilsa oshiriladi (brauze
 RASM_KATALOG = Path(__file__).resolve().parent.parent / 'static' / 'img' / 'xonqizi'
 VIDEO_KATALOG = Path(__file__).resolve().parent.parent / 'media' / 'xarita' / 'xonqizi'
 
-SARLAVHA = 'Applikatsiya «Xonqizi»'
+# Mijozning o'z iborasi (2026-09-05) — Qalamdon sahifasi bilan bir qolipda.
+SARLAVHA = 'Applikatsiya usulidan foydalanib «Xonqizi» yasash texnologiyasi'
+# Yo'l ko'rsatkichi va brauzer yorlig'i uchun qisqa nom (qalamdon.py ga qarang).
+QISQA = '«Xonqizi»'
+# Lede sarlavhani takrorlamaydi.
 TAVSIF = (
-    "Rangli qogʻozdan applikatsiya usulida «Xonqizi» yasash bosqichlari va "
-    "instruksion texnologik xaritasi."
+    "Rangli qogʻozdan ishlash ketma-ketligi, har bosqichning tasviri va video "
+    "lavhasi hamda kerakli ish anjomlari — bitta jadvalda."
 )
 XULOSA = (
     "Xonqizi applikatsiyasini tayyorlash jarayonida oʻquvchilarda qogʻoz bilan "

@@ -63,10 +63,20 @@ RASM_VERSIYA = 8         # rasm o'sha nom bilan almashtirilsa oshiriladi (brauze
 RASM_KATALOG = Path(__file__).resolve().parent.parent / 'static' / 'img' / 'qalamdon'
 VIDEO_KATALOG = Path(__file__).resolve().parent.parent / 'media' / 'xarita' / 'qalamdon'
 
-SARLAVHA = 'Qalamdon «Organayzer»'
+# Sahifaning to'liq nomi — mijozning o'z iborasi (2026-09-05). Sarlavha
+# `<h1>` da va Xarita bo'limidagi havola kartasida chiqadi.
+SARLAVHA = 'Origami usulidan foydalanib «Organayzer» yasash texnologiyasi'
+# Yo'l ko'rsatkichi (crumbs) va brauzer yorlig'i uchun qisqa nom: to'liq
+# ibora 60 belgidan oshadi, yorliqda esa «Origami usulidan foyd…» bo'lib
+# qirqiladi va yo'l ko'rsatkichini ikki qatorga bo'lib yuboradi.
+QISQA = '«Organayzer»'
+# Lede sarlavhani TAKRORLAMAYDI: ilgari «Origami usulida qalamdon
+# «Organayzer» yasash…» deb boshlanardi, yangi sarlavha ostida esa bu
+# so'zma-so'z takror bo'lib qolardi (jadval ustidagi `<caption>` ham
+# aynan shu sababdan olib tashlangan edi).
 TAVSIF = (
-    "Origami usulida qalamdon «Organayzer» yasash bosqichlari va instruksion "
-    "texnologik xaritasi."
+    "Ishni bajarish ketma-ketligi, har bosqichning tasviri va video lavhasi "
+    "hamda kerakli ish anjomlari — bitta jadvalda."
 )
 XULOSA = (
     "Origami texnologiyasi asosida tayyorlangan qalamdon oʻquvchilarda ijodiy "

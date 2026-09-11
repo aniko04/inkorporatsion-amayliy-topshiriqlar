@@ -1,17 +1,23 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.core.paginator import Paginator
+from django.db.models import Avg, Case, Count, F, FloatField, Max, Q, Value, When
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
-from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 from django.conf import settings
+from collections import defaultdict
+from datetime import timedelta
 from functools import wraps
 from .models import Result, Profile, Material
 from . import rasmli_test
 from . import diktant
 from . import qalamdon
 from . import xonqizi
+import csv
 import json
 
 
@@ -262,6 +268,9 @@ def qalamdon_sahifa(request):
     return render(request, 'qalamdon.html', {
         'active': 'xarita',
         'sarlavha': qalamdon.SARLAVHA,
+        # Qisqa nom — yo'l ko'rsatkichi va brauzer yorlig'i uchun
+        # (to'liq sarlavha ikkalasiga ham uzun).
+        'qisqa': qalamdon.QISQA,
         'tavsif': qalamdon.TAVSIF,
         'xulosa': qalamdon.XULOSA,
         'ustunlar': qalamdon.USTUNLAR,
@@ -280,6 +289,9 @@ def xonqizi_sahifa(request):
     return render(request, 'xonqizi.html', {
         'active': 'xarita',
         'sarlavha': xonqizi.SARLAVHA,
+        # Qisqa nom — yo'l ko'rsatkichi va brauzer yorlig'i uchun
+        # (to'liq sarlavha ikkalasiga ham uzun).
+        'qisqa': xonqizi.QISQA,
         'tavsif': xonqizi.TAVSIF,
         'xulosa': xonqizi.XULOSA,
         'ustunlar': xonqizi.USTUNLAR,
@@ -550,3 +562,338 @@ def mashq10b(request):
 @talaba_required
 def mashq10c(request):
     return render(request, 'mashq10c.html')
+
+
+# =========================================================
+# «O'quvchilarim» — administrator uchun foydalanuvchilar va natijalar
+# =========================================================
+# Sahifa faqat xodim (is_staff) uchun ochiq: mijoz aynan admin profilidan
+# kirganda ko'rinishini so'ragan. Rol emas, `is_staff` tekshiriladi —
+# o'qituvchi (talaba) roli har kimga tegishi mumkin, u esa butun saytdagi
+# 1100 dan ortiq foydalanuvchining shaxsiy natijasini ko'rmasligi kerak.
+
+# Mashq kaliti → nishondagi qisqa yorliq. To'liq nom `Result.MASHQ_CHOICES`
+# da; bu yerda faqat jadvalga sig'adigan qisqartma.
+MASHQ_QISQA = {
+    'm1': 'M1', 'm2': 'M2', 'm3': 'M3', 'm4': 'M4', 'm5': 'M5',
+    'm6b': 'M6', 'm7b': 'M7', 'm8b': 'M8', 'm9b': 'M9', 'm10b': 'M10',
+    'rtest': 'RT', 'dikt1': 'D1', 'dikt2': 'D2', 'dikt3': 'D3', 'dikt4': 'D4',
+}
+
+# Ro'yxatni saralash usullari: kalit → (yorliq, order_by argumentlari).
+SARALASH = {
+    'yangi':   ("Yangi ro'yxatdan o'tganlar", ['-date_joined', '-id']),
+    'eski':    ("Avval ro'yxatdan o'tganlar", ['date_joined', 'id']),
+    'ism':     ("Ism bo'yicha (A–Z)", ['first_name', 'last_name', 'username']),
+    'faol':    ("Oxirgi faollik bo'yicha", ['-oxirgi', '-id']),
+    'urinish': ("Ko'p urinish qilganlar", ['-urinish', '-id']),
+    'ball':    ("Yuqori o'rtacha ball", ['-ortacha', '-id']),
+}
+
+SAHIFADA = 20          # bir sahifadagi foydalanuvchi soni
+NISHON_LIMITI = 6      # jadval katagida ko'rsatiladigan natija nishoni
+
+
+def admin_required(view_func):
+    """Faqat xodim (administrator) uchun.
+
+    Kirmagan bo'lsa `LOGIN_URL` ga `?next=` bilan, kirgan-u xodim bo'lmasa
+    bosh sahifaga qaytaradi — `talaba_required` dagi bilan bir xil mantiq
+    (sababini aytmaydi: sahifa borligini bilish ham shart emas).
+    """
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            qism = urlencode({'next': request.get_full_path()})
+            return redirect(f'{settings.LOGIN_URL}?{qism}')
+        if not request.user.is_staff:
+            return redirect('/')
+        return view_func(request, *args, **kwargs)
+    return _wrapped
+
+
+def _foiz_ifodasi(prefiks=''):
+    """`score/total` ni foizga aylantiruvchi SQL ifodasi.
+
+    `total = 0` bo'lgan yozuvlar nolga bo'linishni keltirib chiqarmasin
+    (eski yoki nuqsonli yozuvlar bo'lishi mumkin), shuning uchun `Case`.
+    `prefiks` — bog'lanish yo'li: `User` dan hisoblaganda `'result__'`.
+
+    Standart qiymat 0 EMAS, NULL: `Avg` NULL larni umuman hisobga olmaydi.
+    0 bo'lganda natijasi yo'q foydalanuvchi ham «0%» bo'lib chiqardi —
+    LEFT JOIN unga bitta bo'sh qator beradi, `Case` esa 0 qaytarardi.
+    NULL bilan esa o'rtacha ham NULL bo'ladi va sahifada «—» ko'rinadi.
+    """
+    return Case(
+        When(**{f'{prefiks}total__gt': 0},
+             then=F(f'{prefiks}score') * 100.0 / F(f'{prefiks}total')),
+        default=Value(None),
+        output_field=FloatField(),
+    )
+
+
+def _rol(u):
+    """Foydalanuvchining ko'rsatiladigan roli: (kalit, nom).
+
+    Xodim har doim «Administrator» bo'lib chiqadi — uning ham `Profile` i
+    bo'lishi mumkin, lekin ro'yxatda uni rolidan emas, huquqidan tanish
+    qulayroq. Profilsiz eski hisoblar o'quvchi deb qaraladi (`is_talaba`
+    ham shunday ishlaydi).
+    """
+    if u.is_staff:
+        return 'admin', 'Administrator'
+    # Profil yo'q bo'lsa RelatedObjectDoesNotExist ko'tariladi, u esa
+    # AttributeError dan meros oladi — shuning uchun getattr None qaytaradi.
+    profil = getattr(u, 'profile', None)
+    if profil and profil.role == Profile.ROLE_TALABA:
+        return 'talaba', "O'qituvchi"
+    return 'oquvchi', "O'quvchi"
+
+
+def _saralangan_royxat(request):
+    """Filtr va saralash qo'llangan foydalanuvchilar to'plami + tanlangan sozlamalar.
+
+    Ro'yxat ham HTML sahifada, ham CSV eksportida bir xil bo'lishi kerak,
+    shuning uchun ikkala view shu bitta joydan foydalanadi.
+    """
+    q = request.GET.get('q', '').strip()
+    rol = request.GET.get('rol', '')
+    mashq = request.GET.get('mashq', '')
+    holat = request.GET.get('holat', '')
+    saralash = request.GET.get('saralash', 'yangi')
+    if saralash not in SARALASH:
+        saralash = 'yangi'
+
+    qs = (
+        User.objects
+        .select_related('profile')
+        .annotate(
+            urinish=Count('result', distinct=True),
+            otgan=Count('result', filter=Q(result__is_passed=True), distinct=True),
+            ortacha=Avg(_foiz_ifodasi('result__')),
+            oxirgi=Max('result__created_at'),
+        )
+    )
+
+    if q:
+        qs = qs.filter(
+            Q(first_name__icontains=q) | Q(last_name__icontains=q)
+            | Q(username__icontains=q)
+        )
+
+    if rol == 'admin':
+        qs = qs.filter(is_staff=True)
+    elif rol == Profile.ROLE_TALABA:
+        qs = qs.filter(profile__role=Profile.ROLE_TALABA, is_staff=False)
+    elif rol == Profile.ROLE_OQUVCHI:
+        # Profili yo'q eski hisoblar ham o'quvchi hisoblanadi.
+        qs = qs.filter(
+            Q(profile__role=Profile.ROLE_OQUVCHI) | Q(profile__isnull=True),
+            is_staff=False,
+        )
+
+    if mashq in MASHQ_QISQA:
+        # DIQQAT: bu yerda `qs.filter(result__mashq=...)` ishlatilmaydi —
+        # u yuqoridagi annotate bilan bir xil JOIN ga tushib, urinish va
+        # o'rtacha hisobini FAQAT shu mashq bo'yicha qilib qo'yardi. Ichki
+        # so'rov esa ro'yxatni filtrlaydi, hisoblarga tegmaydi.
+        qs = qs.filter(id__in=Result.objects.filter(mashq=mashq).values('user_id'))
+
+    if holat == 'faol':
+        qs = qs.filter(urinish__gt=0)
+    elif holat == 'nofaol':
+        qs = qs.filter(urinish=0)
+
+    qs = qs.order_by(*SARALASH[saralash][1])
+
+    return qs, {
+        'q': q, 'rol': rol, 'mashq': mashq, 'holat': holat, 'saralash': saralash,
+    }
+
+
+def _umumiy_statistika():
+    """Sahifa tepasidagi kartalar uchun raqamlar."""
+    jami = User.objects.count()
+    admin = User.objects.filter(is_staff=True).count()
+    oqituvchi = (Profile.objects
+                 .filter(role=Profile.ROLE_TALABA, user__is_staff=False)
+                 .count())
+    ortacha = Result.objects.aggregate(x=Avg(_foiz_ifodasi()))['x'] or 0
+    hafta = timezone.now() - timedelta(days=7)
+    return {
+        'jami': jami,
+        'oquvchi': jami - oqituvchi - admin,
+        'oqituvchi': oqituvchi,
+        'admin': admin,
+        'natija': Result.objects.count(),
+        'otgan': Result.objects.filter(is_passed=True).count(),
+        'ortacha': round(ortacha),
+        'faol': Result.objects.values('user_id').distinct().count(),
+        'hafta': Result.objects.filter(created_at__gte=hafta).count(),
+    }
+
+
+def _mashq_statistikasi():
+    """Har bir mashq bo'yicha: urinish, to'liq bajarish va o'rtacha ball."""
+    xom = {
+        r['mashq']: r
+        for r in Result.objects.values('mashq').annotate(
+            soni=Count('id'),
+            otgan=Count('id', filter=Q(is_passed=True)),
+            ortacha=Avg(_foiz_ifodasi()),
+            kishi=Count('user_id', distinct=True),
+        )
+    }
+    qator = []
+    for kalit, nom in Result.MASHQ_CHOICES:
+        r = xom.get(kalit)
+        qator.append({
+            'kalit': kalit,
+            'qisqa': MASHQ_QISQA.get(kalit, kalit),
+            'nomi': nom,
+            'soni': r['soni'] if r else 0,
+            'otgan': r['otgan'] if r else 0,
+            'kishi': r['kishi'] if r else 0,
+            'ortacha': round(r['ortacha']) if r and r['ortacha'] is not None else 0,
+        })
+    return qator
+
+
+@admin_required
+def oquvchilarim(request):
+    """Barcha foydalanuvchilar va ularning mashq natijalari (admin sahifasi)."""
+    qs, sozlama = _saralangan_royxat(request)
+
+    sahifalovchi = Paginator(qs, SAHIFADA)
+    sahifa = sahifalovchi.get_page(request.GET.get('sahifa'))
+    foydalanuvchilar = list(sahifa.object_list)
+
+    # Natijalar FAQAT shu sahifadagi 20 kishi uchun olinadi — 3000 dan ortiq
+    # yozuvni har safar tortish shart emas. Bitta so'rov, keyin xotirada
+    # foydalanuvchi bo'yicha guruhlanadi (N+1 so'rov bo'lmasin).
+    guruh = defaultdict(list)
+    if foydalanuvchilar:
+        for n in (Result.objects
+                  .filter(user__in=foydalanuvchilar)
+                  .order_by('-created_at')):
+            n.qisqa = MASHQ_QISQA.get(n.mashq, n.mashq)
+            guruh[n.user_id].append(n)
+
+    for u in foydalanuvchilar:
+        royxat = guruh.get(u.id, [])
+        u.rol_kalit, u.rol_nomi = _rol(u)
+        u.natijalari = royxat[:NISHON_LIMITI]
+        u.qolgan = max(0, len(royxat) - NISHON_LIMITI)
+        u.ortacha_butun = round(u.ortacha) if u.ortacha is not None else None
+
+    return render(request, 'oquvchilarim.html', {
+        'active': 'oquvchilarim',
+        'sahifa': sahifa,
+        # 56 ta sahifa raqamini qatorga terib bo'lmaydi — Django o'zi
+        # qisqartirib beradi (1 … 7 8 [9] 10 11 … 56). Shablonda argument
+        # bilan chaqirib bo'lmagani uchun shu yerda hisoblanadi.
+        'raqamlar': list(sahifalovchi.get_elided_page_range(
+            sahifa.number, on_each_side=2, on_ends=1)),
+        'uchnuqta': Paginator.ELLIPSIS,
+        'foydalanuvchilar': foydalanuvchilar,
+        'topildi': sahifalovchi.count,
+        'stat': _umumiy_statistika(),
+        'mashq_stat': _mashq_statistikasi(),
+        'mashqlar': Result.MASHQ_CHOICES,
+        'saralashlar': [(k, v[0]) for k, v in SARALASH.items()],
+        'soz': sozlama,
+        # Filtr bo'sh bo'lmasa sahifada «Tozalash» tugmasi chiqadi.
+        'filtrlangan': any(sozlama[k] for k in ('q', 'rol', 'mashq', 'holat')),
+    })
+
+
+@admin_required
+def oquvchi_natija(request, pk):
+    """Bitta foydalanuvchining to'liq natijalar tarixi."""
+    u = get_object_or_404(User.objects.select_related('profile'), pk=pk)
+    natijalar = list(Result.objects.filter(user=u).order_by('-created_at'))
+    for n in natijalar:
+        n.qisqa = MASHQ_QISQA.get(n.mashq, n.mashq)
+
+    # Mashqlar kesimi: har bir mashq bo'yicha eng yaxshi natija va urinishlar.
+    kesim = []
+    for kalit, nom in Result.MASHQ_CHOICES:
+        oid = [n for n in natijalar if n.mashq == kalit]
+        kesim.append({
+            'kalit': kalit,
+            'qisqa': MASHQ_QISQA.get(kalit, kalit),
+            'nomi': nom,
+            'urinish': len(oid),
+            'eng': max((n.percentage for n in oid), default=None),
+            'otgan': any(n.is_passed for n in oid),
+            'oxirgi': oid[0].created_at if oid else None,
+        })
+
+    foizlar = [n.percentage for n in natijalar]
+    rol_kalit, rol_nomi = _rol(u)
+    return render(request, 'oquvchi_natija.html', {
+        'active': 'oquvchilarim',
+        'u': u,
+        'rol_kalit': rol_kalit,
+        'rol_nomi': rol_nomi,
+        'natijalar': natijalar,
+        'kesim': kesim,
+        'urinish': len(natijalar),
+        'otgan': sum(1 for n in natijalar if n.is_passed),
+        'ortacha': round(sum(foizlar) / len(foizlar)) if foizlar else None,
+        'bajarilgan': sum(1 for k in kesim if k['urinish']),
+        'jami_mashq': len(kesim),
+    })
+
+
+@admin_required
+def oquvchilarim_eksport(request):
+    """Ro'yxatni yoki natijalarni CSV bo'lib yuklab berish.
+
+    Filtrlar HTML sahifadagi bilan bir xil (`_saralangan_royxat`), ya'ni
+    ekranda nima ko'rinsa, faylga ham o'sha tushadi.
+
+    Excel uchun ikki nozik joy: fayl boshida BOM turishi kerak (aks holda
+    o'zbekcha belgilar buziladi) va ustunlar `;` bilan ajratiladi —
+    mintaqaviy sozlamada ro'yxat ajratgichi shu.
+    """
+    qs, _ = _saralangan_royxat(request)
+    tur = request.GET.get('tur', 'royxat')
+
+    javob = HttpResponse(content_type='text/csv; charset=utf-8')
+    nom = 'natijalar' if tur == 'natija' else 'foydalanuvchilar'
+    sana = timezone.localtime().strftime('%Y-%m-%d')
+    javob['Content-Disposition'] = f'attachment; filename="{nom}-{sana}.csv"'
+    javob.write('﻿')                    # BOM — Excel uchun
+    yozuvchi = csv.writer(javob, delimiter=';')
+
+    if tur == 'natija':
+        yozuvchi.writerow([
+            'Familiya', 'Ism', 'Login', 'Rol', 'Mashq', "To'g'ri", 'Jami',
+            'Foiz', "To'liq bajarilgan", 'Sana',
+        ])
+        nomlar = dict(Result.MASHQ_CHOICES)
+        for n in (Result.objects
+                  .filter(user__in=qs.values('id'))
+                  .select_related('user', 'user__profile')
+                  .order_by('user__last_name', 'user__first_name', '-created_at')):
+            yozuvchi.writerow([
+                n.user.last_name, n.user.first_name, n.user.username,
+                _rol(n.user)[1], nomlar.get(n.mashq, n.mashq), n.score, n.total,
+                n.percentage, 'ha' if n.is_passed else "yo'q",
+                timezone.localtime(n.created_at).strftime('%d.%m.%Y %H:%M'),
+            ])
+    else:
+        yozuvchi.writerow([
+            'Familiya', 'Ism', 'Login', 'Rol', "Ro'yxatdan o'tgan",
+            'Urinishlar', "To'liq bajarilgan", "O'rtacha foiz", 'Oxirgi faollik',
+        ])
+        for u in qs:
+            yozuvchi.writerow([
+                u.last_name, u.first_name, u.username, _rol(u)[1],
+                timezone.localtime(u.date_joined).strftime('%d.%m.%Y'),
+                u.urinish, u.otgan,
+                round(u.ortacha) if u.ortacha is not None else '',
+                timezone.localtime(u.oxirgi).strftime('%d.%m.%Y %H:%M') if u.oxirgi else '',
+            ])
+    return javob

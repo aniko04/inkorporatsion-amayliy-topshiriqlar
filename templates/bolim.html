@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}{{ bolim_nomi }} — Inkorporatsion topshiriqlar platformasi{% endblock %}
+{% block title %}{{ bolim_nomi }} — Inkorporatsion amaliy topshiriqlar platformasi{% endblock %}
 {% block description %}{{ bolim_lede }}{% endblock %}
+{# Havola ulashilganda ham bo'limning o'z nomi va matni chiqsin — izohi base.html da #}
+{% block og_title %}{{ bolim_nomi }} — Inkorporatsion amaliy topshiriqlar platformasi{% endblock %}
+{% block og_description %}{{ bolim_lede }}{% endblock %}
+{% block twitter_title %}{{ bolim_nomi }} — Inkorporatsion amaliy topshiriqlar platformasi{% endblock %}
+{% block twitter_description %}{{ bolim_lede }}{% endblock %}
 
 {% block content %}
 <section class="page-head">

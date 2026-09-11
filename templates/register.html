@@ -3,9 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ro'yxatdan o'tish — Inkorporatsion topshiriqlar platformasi</title>
+    <title>Ro'yxatdan o'tish — Inkorporatsion amaliy topshiriqlar platformasi</title>
+    <meta name="description" content="Inkorporatsion amaliy topshiriqlar platformasida ro'yxatdan o'ting. O'qituvchi yoki o'quvchi sifatida.">
+    {# Kirish/ro'yxat sahifalari qidiruvda chiqmasin, lekin havola ulashilsa ko'rinsin #}
+    <meta name="robots" content="noindex, follow">
+    <meta name="theme-color" content="#2E7DE0">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Inkorporatsion amaliy topshiriqlar platformasi">
+    <meta property="og:locale" content="uz_UZ">
+    <meta property="og:url" content="{{ sayt_asos }}{{ request.path }}">
+    <meta property="og:title" content="Ro'yxatdan o'tish — Inkorporatsion amaliy topshiriqlar platformasi">
+    <meta property="og:description" content="Inkorporatsion amaliy topshiriqlar platformasida ro'yxatdan o'ting. O'qituvchi yoki o'quvchi sifatida.">
+    <meta property="og:image" content="{{ sayt_asos }}/static/img/og.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Ro'yxatdan o'tish — Inkorporatsion amaliy topshiriqlar platformasi">
+    <meta name="twitter:description" content="Inkorporatsion amaliy topshiriqlar platformasida ro'yxatdan o'ting. O'qituvchi yoki o'quvchi sifatida.">
+    <meta name="twitter:image" content="{{ sayt_asos }}/static/img/og.jpg">
+
     {# `?v=` — kesh buzg'unchi; statik fayllar hashlanmaydi (base.html ga qarang). #}
-    <link rel="stylesheet" href="/static/css/platform.css?v=54">
+    <link rel="stylesheet" href="/static/css/platform.css?v=56">
     <link rel="stylesheet" href="/static/css/auth.css?v=7">
     {# Shriftlar bloklamasdan — izoh base.html da #}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +40,7 @@
             <img src="/static/img/logo.png" alt="" width="256" height="256">
             <span>
                 <span class="sub">Inkorporatsion</span>
-                <span class="name">Topshiriqlar</span>
+                <span class="name">Amaliy topshiriqlar</span>
             </span>
         </a>
 

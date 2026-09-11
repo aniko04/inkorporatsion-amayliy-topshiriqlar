@@ -39,6 +39,12 @@ urlpatterns = [
     path('xarita/xonqizi', views.xonqizi_sahifa, name='xonqizi'),
     path('ishlanma', views.ishlanma, name='ishlanma'),
 
+    # Administrator sahifasi — barcha foydalanuvchilar va ularning natijalari.
+    # `admin_required` ichkarida: xodim bo'lmagan kishi bosh sahifaga qaytadi.
+    path('oquvchilarim', views.oquvchilarim, name='oquvchilarim'),
+    path('oquvchilarim/eksport', views.oquvchilarim_eksport, name='oquvchilarim_eksport'),
+    path('oquvchilarim/<int:pk>', views.oquvchi_natija, name='oquvchi_natija'),
+
     # Auth
     path('login', views.login_view, name='login'),
     path('register', views.register_view, name='register'),

@@ -1,14 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}{{ sarlavha }} — Instruksion texnologik xarita{% endblock %}
+{% block title %}{{ qisqa }} — Instruksion texnologik xarita{% endblock %}
 {% block description %}{{ tavsif }} {{ bosqichlar|length }} bosqich, {{ video_soni }} ta video.{% endblock %}
+{# Ijtimoiy tarmoqda ulashilganda — izohi base.html da #}
+{% block og_title %}{{ qisqa }} — Instruksion texnologik xarita{% endblock %}
+{% block twitter_title %}{{ qisqa }} — Instruksion texnologik xarita{% endblock %}
+{% block og_description %}{{ tavsif }} {{ bosqichlar|length }} bosqich, {{ video_soni }} ta video.{% endblock %}
+{% block twitter_description %}{{ tavsif }} {{ bosqichlar|length }} bosqich, {{ video_soni }} ta video.{% endblock %}
 
 {% block head %}
 {% comment %}
     `?v=` — kesh buzg'unchi. Statik fayllar hashlanmaydi, shuning uchun
     CSS ni tahrirlaganda bu raqamni oshiring (base.html dagi izohga qarang).
 {% endcomment %}
-<link rel="stylesheet" href="/static/css/qalamdon.css?v=7">
+<link rel="stylesheet" href="/static/css/qalamdon.css?v=8">
 {% endblock %}
 
 {% block content %}
@@ -18,7 +23,7 @@
         <nav class="crumbs" aria-label="Yo'l">
             <a href="/">Bosh sahifa</a> <span aria-hidden="true">&rsaquo;</span>
             <a href="/xarita">Instruksion texnologik xarita</a> <span aria-hidden="true">&rsaquo;</span>
-            <span>{{ sarlavha }}</span>
+            <span>{{ qisqa }}</span>
         </nav>
         <h1>{{ sarlavha }}</h1>
         <p class="page-lede">{{ tavsif }}</p>

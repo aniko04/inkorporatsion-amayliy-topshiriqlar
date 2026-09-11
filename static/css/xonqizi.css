@@ -515,3 +515,13 @@
     color: #fff;
     font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
 }
+
+/* ---------------------------------------------------------
+   UZUN SARLAVHA
+   Mijozning to'liq iborasi («… usulidan foydalanib «…» yasash
+   texnologiyasi», 2026-09-05) 60 belgidan oshadi. `platform.css`
+   dagi `.page-head h1` esa `max-width: 20ch` va 3.1rem — bunda
+   sarlavha uch qatorga bo'linib, lentani cho'zib yuborardi.
+   Aniqlik bir xil (0,1,1), lekin bu fayl keyin ulanadi.
+   --------------------------------------------------------- */
+.xq-head h1 { max-width: 30ch; font-size: clamp(1.55rem, 2.9vw, 2.35rem); }

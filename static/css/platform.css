@@ -7,7 +7,7 @@
    login.html, register.html). */
 
 /* =========================================================
-   SUZANI — inkorporatsion topshiriqlar platformasi
+   SUZANI — inkorporatsion amaliy topshiriqlar platformasi
    =========================================================
 
    Sayt ikki ovozda gapiradi, lekin bitta palitrada:
@@ -63,6 +63,7 @@
     --t5: #A8701C;   /* 5 Topshiriq      — zafaron */
     --t6: #8B2F4D;   /* 6 Xarita         — marena */
     --t7: #A83A2B;   /* 7 Dars ishlanma  — anor */
+    --t8: #1E7A6B;   /* 8 O'quvchilarim  — zumrad (admin sahifasi) */
 
     /* ---- O'sha yettitaning och registri: varaq to'ldirmasi ----
        Hammasi --ink bilan 11 dan yuqori kontrastda. */
@@ -73,6 +74,7 @@
     --t5-pale: #F7E8CC;
     --t6-pale: #F3DDE4;
     --t7-pale: #F6E0DC;
+    --t8-pale: #DCEFE9;
 
     /* ---- Eski nomlar (fayl bo'ylab ishlatiladi) ---- */
     --anor:     #A83A2B;
@@ -451,6 +453,13 @@ body.pf {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* Administrator menyusidagi ism (`.hisob-ism`, fayl oxirida bezatiladi)
+   kengligi `.nav-user` bilan bir xil qadamlarda o'zgaradi. Qoida AYNAN
+   shu yerda — quyidagi media so'rovlardan oldin — turishi shart: media
+   so'rov selektor aniqligini oshirmaydi, shuning uchun fayl oxiriga
+   yozilgan `max-width` ularning hammasini bosib ketardi. */
+.hisob-ism { max-width: 84px; }
 .btn-nav {
     display: inline-block;
     padding: 10px 20px;
@@ -1190,7 +1199,7 @@ button.btn-sm { font-family: inherit; cursor: pointer; }
     .brand-name { font-size: 1.20rem; }
     .brand-sub { font-size: 0.70rem; }
     .brand-logo { width: 44px; height: 44px; }
-    .nav-user { font-size: 0.98rem; max-width: 96px; }
+    .nav-user, .hisob-ism { font-size: 0.98rem; max-width: 96px; }
     .btn-nav { font-size: 0.98rem; }
 }
 
@@ -1200,7 +1209,7 @@ button.btn-sm { font-family: inherit; cursor: pointer; }
     .brand-name { font-size: 1.26rem; }
     .brand-sub { font-size: 0.72rem; }
     .brand-logo { width: 46px; height: 46px; }
-    .nav-user { font-size: 1.02rem; max-width: 110px; }
+    .nav-user, .hisob-ism { font-size: 1.02rem; max-width: 110px; }
     .btn-nav { font-size: 1.02rem; padding: 11px 22px; }
 }
 
@@ -1210,7 +1219,7 @@ button.btn-sm { font-family: inherit; cursor: pointer; }
     .brand-name { font-size: 1.32rem; }
     .brand-sub { font-size: 0.74rem; }
     .brand-logo { width: 48px; height: 48px; }
-    .nav-user { font-size: 1.06rem; max-width: 124px; }
+    .nav-user, .hisob-ism { font-size: 1.06rem; max-width: 124px; }
     .btn-nav { font-size: 1.06rem; padding: 12px 24px; }
 }
 
@@ -1222,7 +1231,7 @@ button.btn-sm { font-family: inherit; cursor: pointer; }
     .nav a { font-size: 0.88rem; padding: 9px 7px; }
     .brand-name { font-size: 1.08rem; }
     .brand-sub { font-size: 0.63rem; }
-    .nav-user { font-size: 0.88rem; }
+    .nav-user, .hisob-ism { font-size: 0.88rem; }
     .btn-nav { font-size: 0.88rem; padding: 9px 18px; }
 }
 
@@ -1269,7 +1278,7 @@ button.btn-sm { font-family: inherit; cursor: pointer; }
         border-top: 1px solid rgba(255, 255, 255, 0.12);
     }
     .nav-auth.collapsed { display: none; }
-    .nav-user { max-width: none; }
+    .nav-user, .hisob-ism { max-width: none; }
 }
 
 @media (max-width: 1060px) {
@@ -1477,7 +1486,7 @@ button.btn-sm { font-family: inherit; cursor: pointer; }
 .bosh-yozuv .q-oq   { fill: #fff; stroke: #fff; stroke-width: 22; stroke-linejoin: round; }
 .bosh-yozuv .q-yalt { fill: #fff; opacity: .26; }
 
-/* Ko'k tabletka — «topshiriqlar» */
+/* Ko'k tabletka — «amaliy topshiriqlar» */
 .bosh-tabletka {
     display: inline-block;
     margin-top: 1.4cqw;
@@ -1488,7 +1497,7 @@ button.btn-sm { font-family: inherit; cursor: pointer; }
     color: #fff;
     font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
     font-weight: 700;
-    font-size: max(1.4rem, 7.8cqw);
+    font-size: max(1.25rem, 6.8cqw);
     line-height: 1.15;
     letter-spacing: .01em;
     text-shadow: 0 .03em 0 rgba(0, 0, 0, .14);
@@ -1811,6 +1820,162 @@ button.btn-sm { font-family: inherit; cursor: pointer; }
 .btn-nav.ghost:hover { background: #F1F7FE; border-color: #2E7DE0; color: #2E7DE0; }
 
 .nav-user { color: #35506F; font-family: 'Nunito', system-ui, sans-serif; }
+
+/* ---- Administrator hisobi: navbardagi ism = menyu ----
+   Faqat `is_staff` uchun chiqadi (base.html). Navbar yetti bo'lim bilan
+   bir qatorga millimetrigacha o'lchab sig'dirilgani uchun sakkizinchi
+   havola qo'shib bo'lmaydi — «O'quvchilarim» va boshqaruv paneli shu
+   menyu ichida, «Chiqish» ham o'sha yerga ko'chdi.
+
+   O'lchangan (uzun ism bilan, `.nav-auth` kengligi):
+     oyna 1284 → eski 195px, yangi 180px
+     oyna 1370 → eski 204px, yangi 180px
+     oyna 1454 → eski 217px, yangi 192px
+     oyna 1564 → eski 238px, yangi 206px
+     oyna 1664 → eski 258px, yangi 220px
+   Ya'ni blok kengaymadi, aksincha 15–38px torayadi; `.topbar .wrap` da
+   toshish nolga teng va lenta hamma qadamda 75px (bir qator) bo'lib
+   qoladi. O'lchash usuli: sahifaga kichik `<script>` qo'shib
+   `.topbar .wrap` ning `scrollWidth - clientWidth` ini DOM ga yozish,
+   keyin `--dump-dom` bilan o'qish (`--window-size` viewportdan ~16px
+   keng bo'ladi, shuni hisobga oling). */
+.nav-hisob { position: relative; }
+
+.hisob-tugma {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 13px 5px 5px;
+    background: #F1F7FE;
+    border: 1.5px solid #DCE8F6;
+    border-radius: 999px;
+    color: #35506F;
+    font-family: 'Nunito', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.18s, border-color 0.18s;
+}
+.hisob-tugma:hover { background: #E4EFFB; border-color: #2E7DE0; }
+
+.hisob-harf {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(155deg, #2E7DE0, #1E7A6B);
+    color: #fff;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* Uzun ism navbarni ikkinchi qatorga tushirmasin: kengligi
+   `.nav-user` bilan bir xil qadamlarda o'zgaradi (yuqoridagi
+   media so'rovlarga qarang). */
+.hisob-ism {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nav-hisob .nav-strelka {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    opacity: .7;
+    transition: transform 0.18s;
+}
+.nav-hisob.ochiq .nav-strelka { transform: rotate(180deg); }
+
+/* Panel FAQAT bosilganda ochiladi (base.html dagi JS) — «Topshiriq»
+   menyusidagidek hover bilan emas: ichida «Chiqish» bor, uni sichqoncha
+   tasodifan ustidan o'tganda ochib qo'yish yaramaydi. */
+.hisob-menyu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 60;
+    padding-top: 12px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.16s, transform 0.16s, visibility 0.16s;
+}
+.nav-hisob.ochiq .hisob-menyu { opacity: 1; visibility: visible; transform: none; }
+
+.hisob-menyu-ichi {
+    display: grid;
+    gap: 2px;
+    min-width: 236px;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #E6EDF5;
+    border-radius: 16px;
+    box-shadow: 0 16px 36px rgba(20, 40, 80, 0.16);
+}
+
+.hisob-yorliq {
+    padding: 6px 12px 8px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #94A6BC;
+}
+
+.hisob-menyu-ichi a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: #35506F;
+    font-family: 'Nunito', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 0.93rem;
+    text-decoration: none;
+}
+.hisob-menyu-ichi a svg { flex-shrink: 0; }
+.hisob-menyu-ichi a:hover { background: #F1F7FE; color: #2E7DE0; }
+.hisob-menyu-ichi a.is-active { background: #EAF3FD; color: #2E7DE0; }
+
+/* «Chiqish» — qolganidan ajratilgan va anor rangida. Ikki sinfli
+   selektor, shuning uchun yuqoridagi umumiy rangdan kuchli. */
+.hisob-menyu-ichi a.hisob-chiqish {
+    margin-top: 5px;
+    padding-top: 13px;
+    border-top: 1px solid #EEF3F9;
+    border-radius: 0 0 10px 10px;
+    color: #A83A2B;
+}
+.hisob-menyu-ichi a.hisob-chiqish:hover { background: #FCEDEA; color: #8A2C20; }
+
+/* Gamburger menyuda ochiladigan panel emas — ro'yxat shunchaki
+   ismning ostida turadi (barmoq bilan hover yo'q). `.nav-strelka`
+   yuqoridagi umumiy qoida bilan allaqachon yashiriladi. */
+@media (max-width: 1279px) {
+    .nav-hisob { width: 100%; }
+    .hisob-tugma { width: 100%; justify-content: flex-start; }
+    .hisob-menyu {
+        position: static;
+        padding-top: 8px;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+    }
+    .hisob-menyu-ichi {
+        min-width: 0;
+        padding: 0;
+        background: none;
+        border: none;
+        box-shadow: none;
+    }
+}
 
 /* Hamburger chizig'i oq fonda ko'rinmay qolardi. */
 .nav-toggle span,
@@ -2188,6 +2353,7 @@ body.pf { background: var(--qogoz); }
 .sahifa-topshiriq   { --tus: var(--t5); --tus-pale: var(--t5-pale); }
 .sahifa-xarita      { --tus: var(--t6); --tus-pale: var(--t6-pale); }
 .sahifa-ishlanma    { --tus: var(--t7); --tus-pale: var(--t7-pale); }
+.sahifa-oquvchilarim{ --tus: var(--t8); --tus-pale: var(--t8-pale); }
 
 /* ---------------------------------------------------------
    SAHIFA FONI — tekis emas

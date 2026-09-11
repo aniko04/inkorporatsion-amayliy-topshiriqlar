@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% comment %}
+    Bitta foydalanuvchining kartochkasi: umumiy ko'rsatkichlar, mashqlar
+    kesimi (har mashq bo'yicha eng yaxshi natija) va to'liq urinishlar
+    tarixi. «O'quvchilarim» ro'yxatidan kiriladi; faqat `is_staff` uchun.
+{% endcomment %}
+
+{% block title %}{% if u.last_name or u.first_name %}{{ u.last_name }} {{ u.first_name }}{% else %}{{ u.username }}{% endif %} — natijalar{% endblock %}
+{% block description %}Foydalanuvchining mashq natijalari va urinishlar tarixi.{% endblock %}
+{# Ijtimoiy tarmoqda ulashilganda — izohi base.html da #}
+{% block og_title %}{% if u.last_name or u.first_name %}{{ u.last_name }} {{ u.first_name }}{% else %}{{ u.username }}{% endif %} — natijalar{% endblock %}
+{% block twitter_title %}{% if u.last_name or u.first_name %}{{ u.last_name }} {{ u.first_name }}{% else %}{{ u.username }}{% endif %} — natijalar{% endblock %}
+{% block og_description %}Foydalanuvchining mashq natijalari va urinishlar tarixi.{% endblock %}
+{% block twitter_description %}Foydalanuvchining mashq natijalari va urinishlar tarixi.{% endblock %}
+{# Yopiq sahifa: qidiruv tizimlari indekslamasin #}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/oquvchilar.css?v=1">
+{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div class="wrap">
+        {% include "_sahifa_ikon.html" %}
+        <nav class="crumbs" aria-label="Yo'l">
+            <a href="/">Bosh sahifa</a> <span aria-hidden="true">&rsaquo;</span>
+            <a href="/oquvchilarim">O'quvchilarim</a> <span aria-hidden="true">&rsaquo;</span>
+            <span>{% if u.last_name or u.first_name %}{{ u.last_name }} {{ u.first_name }}{% else %}{{ u.username }}{% endif %}</span>
+        </nav>
+        <h1>{% if u.last_name or u.first_name %}{{ u.last_name }} {{ u.first_name }}{% else %}{{ u.username }}{% endif %}</h1>
+        <p class="page-lede">
+            @{{ u.username }} &middot; {{ rol_nomi }} &middot;
+            {{ u.date_joined|date:"d.m.Y" }} dan beri platformada.
+        </p>
+    </div>
+</section>
+
+<section class="section oq-sahifa">
+    <div class="wrap">
+
+        <a class="oq-orqaga" href="/oquvchilarim">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+            Ro'yxatga qaytish
+        </a>
+
+        {# ===== Kishi kartasi + asosiy raqamlar ===== #}
+        <div class="oq-shaxs">
+            <span class="oq-shaxs-harf" aria-hidden="true">{{ u.first_name|default:u.username|first|upper }}</span>
+            <div class="oq-shaxs-matn">
+                <b>{% if u.last_name or u.first_name %}{{ u.last_name }} {{ u.first_name }}{% else %}{{ u.username }}{% endif %}</b>
+                <span class="oq-rol oq-rol-{{ rol_kalit }}">{{ rol_nomi }}</span>
+                <p>
+                    Login: <b>{{ u.username }}</b>
+                    &middot; Ro'yxatdan o'tgan: <b>{{ u.date_joined|date:"d.m.Y H:i" }}</b>
+                    &middot; Oxirgi kirish:
+                    <b>{% if u.last_login %}{{ u.last_login|date:"d.m.Y H:i" }}{% else %}hech qachon{% endif %}</b>
+                </p>
+            </div>
+            <a class="btn-sm oq-shaxs-tahrir" href="/admin/auth/user/{{ u.id }}/change/">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                Tahrirlash
+            </a>
+        </div>
+
+        <div class="oq-stat oq-stat-4">
+            <div class="oq-kart">
+                <b>{{ urinish }}</b>
+                <span>Jami urinish</span>
+            </div>
+            <div class="oq-kart">
+                <b>{{ otgan }}</b>
+                <span>To'liq bajarilgan (100%)</span>
+            </div>
+            <div class="oq-kart">
+                <b>{% if ortacha is not None %}{{ ortacha }}%{% else %}&mdash;{% endif %}</b>
+                <span>O'rtacha ball</span>
+            </div>
+            <div class="oq-kart">
+                <b>{{ bajarilgan }}<small>/{{ jami_mashq }}</small></b>
+                <span>Boshlangan mashq</span>
+            </div>
+        </div>
+
+        {# ===== Mashqlar kesimi ===== #}
+        <div class="section-head oq-sarlavha">
+            <span class="eyebrow ink">
+                <svg class="motif" aria-hidden="true"><use href="#palak"/></svg>
+                Mashqlar kesimi
+            </span>
+            <h2>Har bir mashq bo'yicha eng yaxshi natija</h2>
+        </div>
+
+        <div class="oq-mashqlar">
+            {% for k in kesim %}
+                <div class="oq-mashq {% if not k.urinish %}oq-mashq-bosh{% endif %}">
+                    <span class="oq-mashq-kod {% if k.otgan %}zor{% elif k.urinish %}yaxshi{% endif %}">{{ k.qisqa }}</span>
+                    <span class="oq-mashq-matn">
+                        <b>{{ k.nomi }}</b>
+                        <span>
+                            {% if k.urinish %}
+                                {{ k.urinish }} urinish &middot; oxirgisi {{ k.oxirgi|date:"d.m.Y" }}
+                            {% else %}
+                                Hali topshirilmagan
+                            {% endif %}
+                        </span>
+                    </span>
+                    <span class="oq-mashq-ball">
+                        {% if k.eng is not None %}
+                            <i>{{ k.eng }}%</i>
+                            <span class="oq-bar"><span style="width: {{ k.eng }}%"></span></span>
+                        {% else %}
+                            <i class="oq-yoq">&mdash;</i>
+                        {% endif %}
+                    </span>
+                </div>
+            {% endfor %}
+        </div>
+
+        {# ===== Urinishlar tarixi ===== #}
+        <div class="section-head oq-sarlavha">
+            <span class="eyebrow ink">
+                <svg class="motif" aria-hidden="true"><use href="#palak"/></svg>
+                {{ urinish }} ta yozuv
+            </span>
+            <h2>Urinishlar tarixi</h2>
+        </div>
+
+        {% if natijalar %}
+            <div class="oq-jadval-quti">
+                <table class="oq-jadval oq-tarix">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="oq-num">№</th>
+                            <th scope="col">Mashq</th>
+                            <th scope="col">Ball</th>
+                            <th scope="col">Foiz</th>
+                            <th scope="col">Holat</th>
+                            <th scope="col">Sana</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for n in natijalar %}
+                            <tr>
+                                <td class="oq-num" data-yorliq="№">{{ forloop.counter }}</td>
+                                <td data-yorliq="Mashq">
+                                    <span class="oq-chip {% if n.percentage == 100 %}zor{% elif n.percentage >= 60 %}yaxshi{% elif n.percentage >= 30 %}orta{% else %}past{% endif %}"><b>{{ n.qisqa }}</b></span>
+                                    <span class="oq-mashq-nomi">{{ n.get_mashq_display }}</span>
+                                </td>
+                                <td data-yorliq="Ball"><b>{{ n.score }}</b> / {{ n.total }}</td>
+                                <td data-yorliq="Foiz">
+                                    <span class="oq-ball">
+                                        <i>{{ n.percentage }}%</i>
+                                        <span class="oq-bar"><span style="width: {{ n.percentage }}%"></span></span>
+                                    </span>
+                                </td>
+                                <td data-yorliq="Holat">
+                                    {% if n.is_passed %}
+                                        <span class="oq-holat zor">To'liq</span>
+                                    {% else %}
+                                        <span class="oq-holat">Tugallanmagan</span>
+                                    {% endif %}
+                                </td>
+                                <td data-yorliq="Sana">{{ n.created_at|date:"d.m.Y H:i" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty">
+                <svg class="motif" aria-hidden="true"><use href="#orama"/></svg>
+                <h3>Bu foydalanuvchi hali mashq topshirmagan</h3>
+                <p>U ro'yxatdan o'tgan, lekin birorta ham test yoki topshiriq natijasi saqlanmagan.</p>
+                <a class="btn btn-solid" href="/oquvchilarim">Ro'yxatga qaytish</a>
+            </div>
+        {% endif %}
+
+    </div>
+</section>
+{% endblock %}

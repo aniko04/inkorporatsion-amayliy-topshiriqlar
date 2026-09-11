@@ -907,7 +907,10 @@
 .m3-confirm-btn,
 .m3-replay-btn {
     background: var(--zafaron);
-    color: var(--siyoh);
+    /* `--siyoh` EMAS: yorqin uslub uni ko'k (#2E7DE0) qilib qayta
+       belgilagan, to'q sariq fonda kontrasti atigi 1.9:1 — yozuv
+       o'qilmaydi. `--ink` (#22384F) bilan 5.5:1 chiqadi. */
+    color: var(--ink);
     border: 0;
     box-shadow: 0 2px 0 var(--zafaron-d), 0 8px 20px rgba(227, 160, 60, .34);
     text-shadow: none;
@@ -919,10 +922,11 @@
     box-shadow: 0 3px 0 var(--zafaron-d), 0 12px 26px rgba(227, 160, 60, .40);
 }
 
-/* Yordamchi tugmalar amal emas — ikkilamchi ko'rinishda. */
+/* Yordamchi tugmalar amal emas — ikkilamchi ko'rinishda.
+   «Kashf et!» bu ro'yxatda EMAS: u raundning asosiy amali
+   (rasmlarni ochadi), quyida zafaron tugma bo'lib beriladi. */
 .m3-hint-btn,
-.m3-home-btn,
-.m3-discover-btn {
+.m3-home-btn {
     background: var(--paper);
     color: var(--ink-2);
     border: 2px solid var(--line-2);
@@ -931,8 +935,109 @@
 }
 
 .m3-hint-btn:hover,
-.m3-home-btn:hover,
-.m3-discover-btn:hover {
+.m3-home-btn:hover {
     border-color: var(--siyoh-3);
     color: var(--siyoh);
+}
+
+
+/* =========================================================
+   OQ FONDA OQ MATN — QOLGAN IKKI JOY
+   ---------------------------------------------------------
+   Yuqoridagi blok panellarni oq plitaga aylantirganda ikkita
+   element e'tibordan chetda qolgan edi. Ikkalasi ham «shisha»
+   uslubida yozilgan: yarim shaffof OQ fon + OQ matn. Rangli
+   panel ustida ular chiroyli ko'rinardi, oq plita ustida esa
+   matn butunlay yo'qoladi — faqat matn soyasidan qolgan
+   xira iz ko'rinib turadi.
+
+     1. `.m3-riddle-text` — topishmoqning o'zi. O'yinning eng
+        muhim matni umuman o'qilmasdi (mijoz shuni ko'rsatdi).
+     2. `.m3-stat-val` / `.m3-stat-label` — yakun ekranidagi
+        «To'g'ri / Noto'g'ri» raqamlari. Yuqoridagi blok
+        `.m3-summary-value` va `.m3-summary-label` ni tuzatgan,
+        lekin HTML da bunday sinflar YO'Q — haqiqiy nomlari
+        `.m3-stat-val` va `.m3-stat-label`.
+
+   Shu sababli yangi qoida yozganda tekshiring: sinf nomi
+   `templates/mashq3.html` da bormi?
+   ========================================================= */
+
+/* ---- Topishmoq kartasi ----
+   Endi u sahifaning eng ko'zga tashlanadigan joyi: mavzu
+   rangidagi och fon, chapda qalin chiziq, siyoh matn.
+   Rang `--mavzu` dan keladi (body dagi `.t-pink`), shuning
+   uchun boshqa mashqda ishlatilsa ham o'z rangida chiqadi. */
+.m3-riddle-panel {
+    border-top: 5px solid var(--mavzu, #8B5CF6);
+}
+
+.m3-riddle-badge {
+    background: var(--mavzu, #8B5CF6);
+    color: #fff;
+    box-shadow: 0 2px 0 color-mix(in srgb, var(--mavzu, #8B5CF6) 70%, #000);
+}
+
+.m3-riddle-text {
+    color: var(--ink);
+    background: var(--mavzu-pale, #EFE9FE);
+    border: 1.5px solid color-mix(in srgb, var(--mavzu, #8B5CF6) 24%, #fff);
+    border-left: 5px solid var(--mavzu, #8B5CF6);
+    border-radius: var(--r-md);
+    /* «Shisha» effekti oq plita ustida ma'nosiz — orqada
+       xiralashtiradigan rangli fon yo'q, faqat sekinlashtiradi. */
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    text-shadow: none;
+    font-size: 1.06rem;
+    font-weight: 600;
+    line-height: 1.9;
+    padding: 20px 22px;
+}
+
+.m3-riddle-text .m3-cursor { background: var(--mavzu, #8B5CF6); }
+
+/* ---- «Kashf et!» — raundning asosiy amali ----
+   Saytdagi hamma amal tugmasi kabi zafaron. «Tasdiqlash»
+   bilan bir vaqtda ko'rinmaydi (JS biri chiqqanda ikkinchisini
+   yashiradi), shuning uchun ikkalasi bir xil rangda bo'lishi
+   chalkashlik tug'dirmaydi — aksincha «bosiladigan tugma shu»
+   degan bitta signal beradi. */
+.m3-discover-btn {
+    background: var(--zafaron);
+    color: var(--ink);
+    border: 0;
+    box-shadow: 0 2px 0 var(--zafaron-d), 0 8px 20px rgba(245, 146, 11, .32);
+    text-shadow: none;
+    /* Asl `m3-pulse` animatsiyasi ko'k soyani lipillatardi —
+       yangi rangga to'g'ri kelmaydi. */
+    animation: none;
+}
+
+.m3-discover-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 0 var(--zafaron-d), 0 12px 26px rgba(245, 146, 11, .40);
+}
+
+.m3-discover-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--zafaron-d), 0 6px 14px rgba(245, 146, 11, .30);
+}
+
+/* ---- Yakun ekranidagi ikkita raqam ---- */
+.m3-stat {
+    background: var(--qogoz);
+    border: 1.5px solid var(--line-3);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+.m3-stat-val {
+    color: var(--ink);
+    text-shadow: none;
+}
+
+.m3-stat-label {
+    color: var(--ink-2);
+    text-shadow: none;
 }

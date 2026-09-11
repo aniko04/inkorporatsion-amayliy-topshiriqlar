@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% comment %}
+    «O'quvchilarim» — administrator sahifasi: platformadagi BARCHA
+    foydalanuvchilar va ular topshirgan mashqlar natijasi.
+
+    Sahifa faqat `is_staff` uchun ochiq (home/views.py → `admin_required`),
+    navbarda esa ismning ostidagi menyudan kiriladi.
+{% endcomment %}
+
+{% block title %}O'quvchilarim — foydalanuvchilar va natijalar{% endblock %}
+{% block description %}Platformada ro'yxatdan o'tgan foydalanuvchilar, ularning rollari va mashq natijalari.{% endblock %}
+{# Ijtimoiy tarmoqda ulashilganda — izohi base.html da #}
+{% block og_title %}O'quvchilarim — foydalanuvchilar va natijalar{% endblock %}
+{% block twitter_title %}O'quvchilarim — foydalanuvchilar va natijalar{% endblock %}
+{% block og_description %}Platformada ro'yxatdan o'tgan foydalanuvchilar, ularning rollari va mashq natijalari.{% endblock %}
+{% block twitter_description %}Platformada ro'yxatdan o'tgan foydalanuvchilar, ularning rollari va mashq natijalari.{% endblock %}
+{# Yopiq sahifa: qidiruv tizimlari indekslamasin #}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block head %}
+{% comment %}
+    `?v=` — kesh buzg'unchi. Statik fayllar hashlanmaydi
+    (core/settings.py: CompressedStaticFilesStorage), shuning uchun
+    stilni tahrirlaganda bu raqamni OSHIRING, aks holda brauzer
+    eski nusxada qolib ketadi.
+{% endcomment %}
+<link rel="stylesheet" href="/static/css/oquvchilar.css?v=1">
+{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div class="wrap">
+        {% include "_sahifa_ikon.html" %}
+        <nav class="crumbs" aria-label="Yo'l">
+            <a href="/">Bosh sahifa</a> <span aria-hidden="true">&rsaquo;</span> <span>O'quvchilarim</span>
+        </nav>
+        <h1>O'quvchilarim</h1>
+        <p class="page-lede">
+            Platformada ro'yxatdan o'tgan barcha foydalanuvchilar, ularning rollari
+            va topshirgan mashqlari natijasi bir joyda.
+        </p>
+    </div>
+</section>
+
+<section class="section oq-sahifa">
+    <div class="wrap">
+
+        {# ===== Umumiy holat: olti raqam ===== #}
+        <div class="oq-stat">
+            <div class="oq-kart">
+                <span class="oq-kart-ikon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 20v-2a4 4 0 0 0-3-3.87"/></svg>
+                </span>
+                <b>{{ stat.jami }}</b>
+                <span>Jami foydalanuvchi</span>
+            </div>
+            <div class="oq-kart">
+                <span class="oq-kart-ikon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 9 12 4 2 9l10 5 10-5Z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg>
+                </span>
+                <b>{{ stat.oquvchi }}</b>
+                <span>O'quvchi</span>
+            </div>
+            <div class="oq-kart">
+                <span class="oq-kart-ikon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+                </span>
+                <b>{{ stat.oqituvchi }}</b>
+                <span>O'qituvchi</span>
+            </div>
+            <div class="oq-kart">
+                <span class="oq-kart-ikon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </span>
+                <b>{{ stat.natija }}</b>
+                <span>Topshirilgan mashq</span>
+            </div>
+            <div class="oq-kart">
+                <span class="oq-kart-ikon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+                </span>
+                <b>{{ stat.ortacha }}%</b>
+                <span>O'rtacha ball</span>
+            </div>
+            <div class="oq-kart">
+                <span class="oq-kart-ikon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 4H7v6a5 5 0 0 0 10 0V4Z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>
+                </span>
+                <b>{{ stat.otgan }}</b>
+                <span>To'liq bajarilgan (100%)</span>
+            </div>
+        </div>
+
+        <p class="oq-izoh">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+            <span>
+                <b>{{ stat.faol }}</b> foydalanuvchi hech bo'lmasa bitta mashqni topshirgan;
+                so'nggi 7 kunda <b>{{ stat.hafta }}</b> ta natija qayd etildi.
+                Mashq «to'liq bajarilgan» deb faqat 100% da hisoblanadi.
+            </span>
+        </p>
+
+        {# ===== Mashqlar kesimi — ochiladigan ro'yxat ===== #}
+        <details class="guruh oq-kesim">
+            <summary>
+                <svg class="motif" aria-hidden="true"><use href="#palak"/></svg>
+                <span class="guruh-nomi">Mashqlar kesimida</span>
+                <span class="guruh-son">{{ mashq_stat|length }}</span>
+                <svg class="guruh-strelka" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <div class="guruh-ichi">
+                <div class="oq-mashqlar">
+                    {% for m in mashq_stat %}
+                        <a class="oq-mashq" href="{% querystring mashq=m.kalit sahifa=None %}" title="Faqat shu mashqni topshirganlarni ko'rsatish">
+                            <span class="oq-mashq-kod">{{ m.qisqa }}</span>
+                            <span class="oq-mashq-matn">
+                                <b>{{ m.nomi }}</b>
+                                <span>{{ m.kishi }} kishi &middot; {{ m.soni }} urinish &middot; {{ m.otgan }} ta 100%</span>
+                            </span>
+                            <span class="oq-mashq-ball">
+                                <i>{{ m.ortacha }}%</i>
+                                <span class="oq-bar"><span style="width: {{ m.ortacha }}%"></span></span>
+                            </span>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </details>
+
+        {# ===== Filtr ===== #}
+        <form class="oq-filtr" method="get" action="/oquvchilarim">
+            <div class="oq-maydon oq-qidiruv">
+                <label for="f-q">Qidiruv</label>
+                <div class="oq-qidiruv-quti">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    <input type="search" id="f-q" name="q" value="{{ soz.q }}"
+                           placeholder="Ism, familiya yoki login" autocomplete="off">
+                </div>
+            </div>
+
+            <div class="oq-maydon">
+                <label for="f-rol">Rol</label>
+                <select id="f-rol" name="rol">
+                    <option value="">Hammasi</option>
+                    <option value="oquvchi" {% if soz.rol == 'oquvchi' %}selected{% endif %}>O'quvchi</option>
+                    <option value="talaba" {% if soz.rol == 'talaba' %}selected{% endif %}>O'qituvchi</option>
+                    <option value="admin" {% if soz.rol == 'admin' %}selected{% endif %}>Administrator</option>
+                </select>
+            </div>
+
+            <div class="oq-maydon">
+                <label for="f-mashq">Mashq</label>
+                <select id="f-mashq" name="mashq">
+                    <option value="">Barcha mashqlar</option>
+                    {% for kalit, nom in mashqlar %}
+                        <option value="{{ kalit }}" {% if soz.mashq == kalit %}selected{% endif %}>{{ nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="oq-maydon">
+                <label for="f-holat">Holat</label>
+                <select id="f-holat" name="holat">
+                    <option value="">Hammasi</option>
+                    <option value="faol" {% if soz.holat == 'faol' %}selected{% endif %}>Natijasi bor</option>
+                    <option value="nofaol" {% if soz.holat == 'nofaol' %}selected{% endif %}>Hali topshirmagan</option>
+                </select>
+            </div>
+
+            <div class="oq-maydon">
+                <label for="f-saralash">Saralash</label>
+                <select id="f-saralash" name="saralash">
+                    {% for kalit, nom in saralashlar %}
+                        <option value="{{ kalit }}" {% if soz.saralash == kalit %}selected{% endif %}>{{ nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="oq-filtr-tugma">
+                <button class="btn btn-solid" type="submit">Ko'rsatish</button>
+                {% if filtrlangan %}
+                    <a class="oq-tozala" href="/oquvchilarim">Tozalash</a>
+                {% endif %}
+            </div>
+        </form>
+
+        {# ===== Topilgan soni + CSV ===== #}
+        <div class="oq-panel">
+            <p class="oq-topildi">
+                <b>{{ topildi }}</b> ta foydalanuvchi
+                {% if filtrlangan %}topildi{% endif %}
+                {% if sahifa.paginator.num_pages > 1 %}
+                    <span>&middot; {{ sahifa.number }}-sahifa / {{ sahifa.paginator.num_pages }}</span>
+                {% endif %}
+            </p>
+            {% comment %}
+                Eksport havolalari joriy filtrni saqlab qoladi: ekranda nima
+                ko'rinsa, faylga ham o'sha tushadi. `{% querystring %}` mavjud
+                so'rov satrini olib, faqat ko'rsatilgan kalitlarni almashtiradi.
+            {% endcomment %}
+            <div class="oq-eksport">
+                <a class="btn-sm" href="/oquvchilarim/eksport{% querystring tur='royxat' sahifa=None %}">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 11l5 5 5-5M4 20h16"/></svg>
+                    Ro'yxat (CSV)
+                </a>
+                <a class="btn-sm" href="/oquvchilarim/eksport{% querystring tur='natija' sahifa=None %}">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 11l5 5 5-5M4 20h16"/></svg>
+                    Natijalar (CSV)
+                </a>
+            </div>
+        </div>
+
+        {# ===== Asosiy jadval ===== #}
+        {% if foydalanuvchilar %}
+            <div class="oq-jadval-quti">
+                <table class="oq-jadval">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="oq-num">№</th>
+                            <th scope="col">Foydalanuvchi</th>
+                            <th scope="col">Rol</th>
+                            <th scope="col">Urinish</th>
+                            <th scope="col">Natijalari</th>
+                            <th scope="col">O'rtacha</th>
+                            <th scope="col"><span class="oq-yashirin">Amal</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in foydalanuvchilar %}
+                            <tr>
+                                <td class="oq-num" data-yorliq="№">{{ sahifa.start_index|add:forloop.counter0 }}</td>
+
+                                <td data-yorliq="Foydalanuvchi">
+                                    <a class="oq-kishi" href="/oquvchilarim/{{ u.id }}">
+                                        <span class="oq-harf" aria-hidden="true">{{ u.first_name|default:u.username|first|upper }}</span>
+                                        <span class="oq-kishi-matn">
+                                            <b>{% if u.last_name or u.first_name %}{{ u.last_name }} {{ u.first_name }}{% else %}{{ u.username }}{% endif %}</b>
+                                            <span>@{{ u.username }} &middot; {{ u.date_joined|date:"d.m.Y" }} dan</span>
+                                        </span>
+                                    </a>
+                                </td>
+
+                                <td data-yorliq="Rol">
+                                    <span class="oq-rol oq-rol-{{ u.rol_kalit }}">{{ u.rol_nomi }}</span>
+                                </td>
+
+                                <td data-yorliq="Urinish">
+                                    <span class="oq-urinish">{{ u.urinish }}</span>
+                                    {% if u.otgan %}<span class="oq-otgan">{{ u.otgan }} ta 100%</span>{% endif %}
+                                </td>
+
+                                <td class="oq-natija-katak" data-yorliq="Natijalari">
+                                    {% for n in u.natijalari %}
+                                        {% comment %}
+                                            Nishon rangi foizga qarab: 100% yashil, 60+ ko'k,
+                                            30+ zafaron, qolgani anor. `title` da to'liq nom,
+                                            ball va sana — sichqoncha ustiga kelganda chiqadi.
+                                        {% endcomment %}
+                                        <span class="oq-chip {% if n.percentage == 100 %}zor{% elif n.percentage >= 60 %}yaxshi{% elif n.percentage >= 30 %}orta{% else %}past{% endif %}"
+                                              title="{{ n.get_mashq_display }} — {{ n.score }}/{{ n.total }} ({{ n.percentage }}%), {{ n.created_at|date:"d.m.Y H:i" }}">
+                                            <b>{{ n.qisqa }}</b><i>{{ n.percentage }}%</i>
+                                        </span>
+                                    {% empty %}
+                                        <span class="oq-yoq">Hali mashq topshirmagan</span>
+                                    {% endfor %}
+                                    {% if u.qolgan %}
+                                        <a class="oq-yana" href="/oquvchilarim/{{ u.id }}">+{{ u.qolgan }}</a>
+                                    {% endif %}
+                                </td>
+
+                                <td data-yorliq="O'rtacha">
+                                    {% if u.ortacha_butun is not None %}
+                                        <span class="oq-ball">
+                                            <i>{{ u.ortacha_butun }}%</i>
+                                            <span class="oq-bar"><span style="width: {{ u.ortacha_butun }}%"></span></span>
+                                        </span>
+                                    {% else %}
+                                        <span class="oq-yoq">&mdash;</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="oq-amal">
+                                    <a class="btn-sm" href="/oquvchilarim/{{ u.id }}">
+                                        Batafsil
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {# ===== Sahifalash ===== #}
+            {% if sahifa.paginator.num_pages > 1 %}
+                <nav class="oq-sahifalar" aria-label="Sahifalar">
+                    {% if sahifa.has_previous %}
+                        <a href="{% querystring sahifa=sahifa.previous_page_number %}" rel="prev">&lsaquo; Oldingi</a>
+                    {% else %}
+                        <span class="oq-sonmas">&lsaquo; Oldingi</span>
+                    {% endif %}
+
+                    {% for r in raqamlar %}
+                        {% if r == uchnuqta %}
+                            <span class="oq-nuqta">{{ r }}</span>
+                        {% elif r == sahifa.number %}
+                            <span class="oq-joriy" aria-current="page">{{ r }}</span>
+                        {% else %}
+                            <a href="{% querystring sahifa=r %}">{{ r }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if sahifa.has_next %}
+                        <a href="{% querystring sahifa=sahifa.next_page_number %}" rel="next">Keyingi &rsaquo;</a>
+                    {% else %}
+                        <span class="oq-sonmas">Keyingi &rsaquo;</span>
+                    {% endif %}
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="empty">
+                <svg class="motif" aria-hidden="true"><use href="#orama"/></svg>
+                <h3>Bunday foydalanuvchi topilmadi</h3>
+                <p>Qidiruv so'zini yoki filtrlarni o'zgartirib ko'ring.</p>
+                <a class="btn btn-solid" href="/oquvchilarim">Filtrni tozalash</a>
+            </div>
+        {% endif %}
+
+    </div>
+</section>
+{% endblock %}
