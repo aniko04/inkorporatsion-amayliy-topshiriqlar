@@ -43,13 +43,20 @@ def _mijoz_ip(sorov):
     (`SECURE_PROXY_SSL_HEADER` o'rnatilgan bo'lsa). Aks holda hujumchi bu
     sarlavhani o'zi yozib, har safar boshqa IP bo'lib ko'rinishi va
     cheklovni butunlay aylanib o'tishi mumkin edi.
+
+    Proksi orqasida ham faqat OXIRGI qiymat olinadi. nginx
+    (`$proxy_add_x_forwarded_for`) mijoz yuborgan sarlavhani saqlab, haqiqiy
+    IP ni oxiriga qo'shadi: `X-Forwarded-For: soxta` yuborgan hujumchi
+    `soxta, 1.2.3.4` bo'lib keladi. Birinchi qiymat mijozniki — uni har
+    safar almashtirib, cheklovni aylanib o'tish mumkin edi. Oxirgisini nginx
+    o'zi yozadi, uni soxtalashtirib bo'lmaydi (oldinda bitta proksi bor).
     """
     from django.conf import settings
 
     if getattr(settings, 'SECURE_PROXY_SSL_HEADER', None):
         oldinga = sorov.META.get('HTTP_X_FORWARDED_FOR', '')
         if oldinga:
-            return oldinga.split(',')[0].strip()
+            return oldinga.split(',')[-1].strip()
     return sorov.META.get('REMOTE_ADDR', '?')
 
 

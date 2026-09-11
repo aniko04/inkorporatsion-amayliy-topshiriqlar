@@ -45,8 +45,7 @@ cd beshbarmoq
 python -m venv env
 env/bin/activate                # Windows: env\Scripts\activate
 
-python -m pip install -r requirements.txt
-python -m pip install -r requirements-server.txt   # waitress (tavsiya etiladi)
+python -m pip install -r requirements.txt   # bitta fayl, waitress ham ichida
 ```
 
 Bazani mahalliy kompyuterdan ko'chiring (yangi bo'sh baza kerak bo'lsa —
@@ -59,10 +58,10 @@ scp db.sqlite3 server:/loyiha/yo'li/
 `media/` jildi ham (≈350 MB — kitoblar, videolar, muqovalar) ko'chirilishi kerak;
 u git'da bor, shuning uchun `git clone` bilan birga keladi.
 
-Sozlamalarni yozing va statikni yig'ing:
+`.env` (sozlamalar) ham git'da — `git clone` bilan keladi, hech narsa yozish
+shart emas. Bazani tayyorlang va statikni yig'ing:
 
 ```bash
-cp .env.namuna .env      # ichini tahrirlang — pastda tushuntirilgan
 python manage.py migrate
 python manage.py collectstatic --noinput
 python manage.py check --deploy     # xavfsizlik tekshiruvi, pastga qarang
@@ -72,29 +71,26 @@ python manage.py check --deploy     # xavfsizlik tekshiruvi, pastga qarang
 
 ## 2. `.env` fayli
 
-Barcha server sozlamalari shu yerda. Kodga (`core/settings.py`) tegish
-**shart emas** — u git orqali o'zgarishsiz keladi, `.env` esa serverda qoladi.
+Barcha sozlamalar — domenlar, HTTPS, HSTS — **bitta `.env` faylida**, loyiha
+ildizida. U **git'da turadi**: kompyuterda o'zgartirib push qilasiz, serverda
+`git pull` + restart. Nusxa ko'chirish, nomini o'zgartirish yo'q. Har bir
+qator nima uchun shunday ekani faylning o'zida izohlangan.
 
-Eng kam holat — HTTPS ishlayotgan bo'lsa faqat shu bitta qator yetarli:
+- **Serverda `.env` ni qo'lda tahrirlamang** — keyingi `git pull` «local
+  changes would be overwritten» deb to'xtaydi. Tahrir faqat kompyuterda.
+- **Yangi domen** — `.env` dagi `DJANGO_ALLOWED_HOSTS` qatoriga. Domenlar
+  faqat shu yerda; `core/settings.py` da ro'yxat yo'q. CSRF ro'yxati undan o'zi
+  yasaladi.
+- Ichida sir yo'q, shuning uchun git'da turishi xavfsiz. Yagona sir —
+  maxfiy kalit — pastda.
 
-```ini
-DJANGO_HTTPS=1
-```
+Hozirgi holat (2026-09-11 dagi server tekshiruviga ko'ra): HTTPS yoqilgan,
+`http → https` ni nginx qiladi (Django'da `DJANGO_SSL_REDIRECT=0`, redirect
+halqasi xavfi yo'q), HSTS boshida 1 soat va poddomenlarsiz (`www` ga sertifikat
+yo'q).
 
-Shunda:
-
-- `http://` so'rovlari `https://` ga yo'naltiriladi;
-- session va CSRF cookie'lari faqat himoyalangan ulanishda yuboriladi;
-- HSTS sarlavhasi qo'shiladi (1 yil);
-- Django TLS'ni oldindagi nginx/Cloudflare tugatganini `X-Forwarded-Proto`
-  sarlavhasidan biladi — shuning uchun redirect halqasi bo'lmaydi.
-
-**Sertifikat hali yo'q bo'lsa `DJANGO_HTTPS=1` qilmang** — sayt ochilmay qoladi.
-
-Qolgan o'zgaruvchilar (`.env.namuna` da hammasi izohi bilan):
-`DJANGO_HSTS_SECONDS`, `DJANGO_HSTS_SUBDOMAINS`, `DJANGO_HSTS_PRELOAD`,
-`DJANGO_SSL_REDIRECT`, `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`,
-`DJANGO_CSRF_TRUSTED_ORIGINS`, `DJANGO_DB_PATH`, `DJANGO_DEBUG`.
+**Sertifikati yo'q domen uchun `DJANGO_HTTPS=1` xavfli** — HSTS yuborilgach,
+brauzer u domenni faqat https orqali ochishga urinadi.
 
 ### Maxfiy kalit haqida
 
@@ -117,11 +113,28 @@ yaratiladi va hamma yana bir marta chiqib qoladi.
 ### Tavsiya etiladigan yo'l — waitress
 
 ```bash
-python -m waitress --listen=127.0.0.1:8000 --threads=8 core.wsgi:application
+python -m waitress --listen=127.0.0.1:8000 --threads=8 \
+    --trusted-proxy=127.0.0.1 "--trusted-proxy-headers=x-forwarded-proto x-forwarded-for" \
+    core.wsgi:application
 ```
 
 Waitress toza Python'da yozilgan, Windows'da ham Linux'da ham bir xil ishlaydi
-va `requirements-server.txt` da bor.
+va `requirements.txt` da bor.
+
+**Ikkala `--trusted-proxy` bayrog'i majburiy.** Waitress sukut bo'yicha
+nginx yuborgan `X-Forwarded-Proto` va `X-Forwarded-For` ni **o'chirib
+tashlaydi** (2026-09-11 da tekshirildi: bayroqsiz Django `127.0.0.1` va `http`
+ni ko'radi). Oqibati jim, lekin jiddiy:
+
+- Django HTTPS ekanini bilmaydi — HSTS yuborilmaydi, `DJANGO_SSL_REDIRECT=1`
+  bo'lsa esa cheksiz yo'naltirish halqasi;
+- har bir foydalanuvchi `127.0.0.1` bo'lib ko'rinadi — kirish cheklovi
+  (`home/xavfsizlik.py`) butun sayt uchun **bitta** hisob yuritadi: kimdir
+  30 marta parolni xato tersa, 10 daqiqaga **hamma** kira olmay qoladi.
+
+Bayroqlar bilan waitress bu sarlavhalarga faqat `127.0.0.1` dan (ya'ni
+nginx'dan) ishonadi, haqiqiy IP ni o'zi aniqlaydi. Qo'shtirnoq bayroqni
+o'rab turishi shart: ichidagi bo'sh joy ikki sarlavhani ajratadi.
 
 **`manage.py runserver` ni doimiy ishlatmang.** U ishlab chiqish uchun
 mo'ljallangan: bitta oqim (bir vaqtda bitta so'rov — 350 MB lik videolar bor
@@ -142,7 +155,9 @@ After=network.target
 User=www-data
 WorkingDirectory=/loyiha/yo'li
 ExecStart=/loyiha/yo'li/env/bin/python -m waitress \
-          --listen=127.0.0.1:8000 --threads=8 core.wsgi:application
+          --listen=127.0.0.1:8000 --threads=8 \
+          --trusted-proxy=127.0.0.1 "--trusted-proxy-headers=x-forwarded-proto x-forwarded-for" \
+          core.wsgi:application
 Restart=always
 RestartSec=5
 
@@ -175,7 +190,7 @@ server {
         proxy_set_header   Host              $host;
         proxy_set_header   X-Real-IP         $remote_addr;
         proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header   X-Forwarded-Proto $scheme;   # ← shusiz redirect halqasi
+        proxy_set_header   X-Forwarded-Proto $scheme;   # ← shusiz Django HTTPS ni bilmaydi
     }
 }
 ```
@@ -201,7 +216,12 @@ sudo systemctl restart beshbarmoq
   qayta ishga tushirmaguncha ko'rinmaydi;
 - WhiteNoise `staticfiles/` ni **faqat bir marta, ishga tushishda** o'qiydi —
   yangi qo'shilgan fayl qayta ishga tushirmaguncha 404 qaytaradi (sahifa
-  uslubsiz, rasmlarsiz ochiladi).
+  uslubsiz, rasmlarsiz ochiladi);
+- `.env` ham faqat ishga tushishda o'qiladi.
+
+`git pull` «untracked working tree file '.env' would be overwritten» deb
+to'xtasa — serverda eski, qo'lda yozilgan `.env` qolgan: uni o'chirib
+(`rm .env`), pull'ni qaytaring. Bir martalik holat.
 
 ---
 
@@ -265,8 +285,8 @@ bunda **kompyuteringiz internetga ochiladi** — quyidagilarga rioya qiling.
 Cloudflare Tunnel bilan:
 
 ```bash
-# 1-terminal: sayt (faqat kompyuterning o'zida tinglaydi)
-env\Scripts\python.exe -m waitress --listen=127.0.0.1:8000 --threads=8 core.wsgi:application
+# 1-terminal: sayt (faqat kompyuterning o'zida tinglaydi; bayroqlar — 3-bo'limga qarang)
+env\Scripts\python.exe -m waitress --listen=127.0.0.1:8000 --threads=8 --trusted-proxy=127.0.0.1 "--trusted-proxy-headers=x-forwarded-proto x-forwarded-for" core.wsgi:application
 
 # 2-terminal: tunnel
 cloudflared tunnel --url http://127.0.0.1:8000
@@ -313,21 +333,22 @@ python manage.py zaxira --royxat                     # zaxiralar joyidami
 ## 6. Xavfsizlik tekshiruvi
 
 ```bash
-DJANGO_HTTPS=1 python manage.py check --deploy
+python manage.py check --deploy
 ```
 
-Faqat bitta ogohlantirish qolishi kerak:
+Uchta ogohlantirish chiqadi — uchalasi ham `.env` da **ataylab**:
 
-> `security.W021` — `SECURE_HSTS_PRELOAD` yoqilmagan.
+- `security.W005` — HSTS poddomenlarga tarqatilmagan (`www` ga sertifikat yo'q);
+- `security.W008` — Django o'zi https'ga yo'naltirmaydi (buni nginx qiladi);
+- `security.W021` — `SECURE_HSTS_PRELOAD` yoqilmagan.
 
-Bu **ataylab** shunday. Preload — domenni brauzerlarning ichki ro'yxatiga
-qo'shish; undan chiqish oylar oladi va shu vaqt davomida sayt HTTPS'siz umuman
-ochilmaydi. Sayt uzoq vaqt barqaror ishlagach, `.env` da
-`DJANGO_HSTS_PRELOAD=1` bilan yoqishingiz mumkin.
+Preload — domenni brauzerlarning ichki ro'yxatiga qo'shish; undan chiqish oylar
+oladi va shu vaqt davomida sayt HTTPS'siz umuman ochilmaydi. Sayt uzoq vaqt
+barqaror ishlagach, `.env` da `DJANGO_HSTS_PRELOAD=1` bilan yoqish mumkin.
 
-Boshqa ogohlantirish chiqsa — `.env` da `DJANGO_HTTPS=1` yozilmagan.
+Boshqa ogohlantirish chiqsa (masalan `W004`, `W012`, `W016`) — `.env` o'qilmayapti.
 
-Nima yoqilgan: HTTPS'ga majburiy yo'naltirish, HSTS (1 yil, poddomenlar bilan),
+Nima yoqilgan: HTTPS'ga yo'naltirish (nginx), HSTS (hozircha 1 soat),
 `Secure` + `HttpOnly` + `SameSite=Lax` cookie'lar, `X-Frame-Options: DENY`
 (media uchun `SAMEORIGIN` — PDF ko'ruvchisi ishlashi uchun),
 `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`.
@@ -346,12 +367,14 @@ tail -50 logs/xato.log
 
 | Belgi | Sabab |
 |---|---|
-| Sayt cheksiz `https` ga yo'naltiraveradi | nginx `X-Forwarded-Proto` ni uzatmayapti |
+| `504 Gateway Timeout` (1 daqiqa kutib) | nginx ishlayapti, Django/waitress javob bermayapti — `sudo systemctl status beshbarmoq` |
+| `502 Bad Gateway` (darhol) | Django/waitress umuman ishga tushmagan — xato `logs/xato.log` yoki `journalctl -u beshbarmoq` da |
+| Sayt cheksiz `https` ga yo'naltiraveradi | `.env` da `DJANGO_SSL_REDIRECT=1` qilingan va nginx `X-Forwarded-Proto` ni uzatmayapti |
 | Barcha foydalanuvchilar chiqib ketdi | `.secret_key` o'chgan yoki o'zgargan (yuqoriga qarang) |
 | Sahifa uslubsiz, rasmlar yo'q | `collectstatic` qilinmagan **yoki** qayta ishga tushirilmagan |
 | `.html` o'zgarishi ko'rinmayapti | shablon keshi — qayta ishga tushiring |
 | Rasm yarmigacha yuklanadi | WhiteNoise eski indeks bilan ishlayapti — qayta ishga tushiring |
-| `DisallowedHost` xatosi | domen `DJANGO_ALLOWED_HOSTS` da yo'q |
+| `400 Bad Request` / `DisallowedHost` | domen `.env` dagi `DJANGO_ALLOWED_HOSTS` da yo'q |
 | `database is locked` | juda kam kutiladi (WAL + 5s kutish yoqilgan); takrorlansa PostgreSQL'ga o'tish vaqti keldi |
 
 ---

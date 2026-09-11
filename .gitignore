@@ -139,7 +139,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+# (.env bu loyihada ATAYLAB git'da — ichida sir yo'q; pastdagi «Production» bo'limiga qarang)
 .envrc
 .venv
 env/
@@ -215,11 +215,9 @@ __marimo__/
 malumotlar/
 
 # --- Production (2026-09-09) ---
-# Har bir serverning o'z sozlamasi. Namuna: .env.namuna (u git'ga kiradi).
-.env
-# Serverga ko'chiriladigan tayyor nusxa (u yerda nomi `.env` bo'ladi).
-.env.server
-# SECRET_KEY sayt birinchi ishga tushganda shu yerda o'zi yaratiladi.
+# `.env` git'ga KIRADI (2026-09-11): domenlar va HTTPS sozlamasi, sir yo'q —
+# serverga `git pull` bilan o'zi boradi. Yagona sir — SECRET_KEY, u shu yerda:
+# sayt birinchi ishga tushganda har kompyuterda o'zi yaratiladi, git'ga kirmaydi.
 .secret_key
 # Xato jurnallari.
 logs/

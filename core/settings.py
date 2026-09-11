@@ -3,11 +3,11 @@ Django sozlamalari — «Inkorporatsion amaliy topshiriqlar» metodik e-platform
 
 Sozlamalar ikki manbadan o'qiladi:
   1. Muhit o'zgaruvchilari (environment variables);
-  2. Loyiha ildizidagi ixtiyoriy `.env` fayli (namuna: `.env.namuna`).
+  2. Loyiha ildizidagi `.env` fayli — domenlar, HTTPS va boshqalar.
 
-Hech biri bo'lmasa — xavfsiz, ishlab chiqish (dev) uchun mos standart qiymatlar
-ishlatiladi. Ya'ni bu faylni serverda TAHRIRLASH SHART EMAS: serverga `.env`
-qo'yiladi, kod esa git orqali o'zgarishsiz keladi. To'liq qo'llanma: DEPLOY.md
+`.env` git'da turadi va serverga `git pull` bilan o'zi boradi; ichida sir
+yo'q (maxfiy kalit alohida `.secret_key` da). Bu faylni tahrirlash odatda
+SHART EMAS — sozlama `.env` da o'zgartiriladi. To'liq qo'llanma: DEPLOY.md
 """
 
 import os
@@ -104,15 +104,10 @@ SECRET_KEY = _maxfiy_kalit()
 # statikni WhiteNoise beradi). Yoqish uchun `.env` ga `DJANGO_DEBUG=1`.
 DEBUG = _bayroq('DJANGO_DEBUG', False)
 
-ALLOWED_HOSTS = _royxat('DJANGO_ALLOWED_HOSTS', [
-    "aniko.uz", "www.aniko.uz",
-    "texnoedu.uz", "www.texnoedu.uz",
-    "vibe-coder.uz", "www.vibe-coder.uz",
-    "verbatum.xyz", "www.verbatum.xyz",
-    "d-steam.uz", "www.d-steam.uz",
-    "inkorporatsion-amayliy-topshiriqlar.uz", "www.inkorporatsion-amayliy-topshiriqlar.uz",
-    "localhost", "127.0.0.1",
-])
+# Saytning domenlari `.env` dagi DJANGO_ALLOWED_HOSTS da — faqat o'sha yerda.
+# Bu yerdagi ro'yxat `.env` umuman topilmagandagi zaxira: sayt faqat shu
+# kompyuterning o'zida ochiladi, begona domen «400 Bad Request» oladi.
+ALLOWED_HOSTS = _royxat('DJANGO_ALLOWED_HOSTS', ["localhost", "127.0.0.1"])
 
 CSRF_TRUSTED_ORIGINS = _royxat('DJANGO_CSRF_TRUSTED_ORIGINS', [
     f"{sxema}://{host}"
@@ -265,13 +260,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ---------------------------------------------------------------------------
 # Xavfsizlik
 # ---------------------------------------------------------------------------
-# Quyidagilar HTTPS bo'lgandagina yoqiladi. Serverda `.env` ga
-# `DJANGO_HTTPS=1` yozing — shunda `manage.py check --deploy` toza chiqadi.
+# Quyidagilar `.env` da `DJANGO_HTTPS=1` bo'lgandagina yoqiladi (u yerda
+# yoqilgan). Nima uchun qaysi qiymat tanlangani — `.env` ning o'zida.
 #
-# NEGA STANDART HOLDA O'CHIQ: bu loyihada DEBUG ishlab chiqishda ham False,
-# ya'ni mahalliy `runserver` ham «production» sozlamalari bilan ishlaydi.
-# Agar HTTPS majburlash standart yoqiq bo'lsa, http://127.0.0.1:8000 darhol
-# https ga yo'naltirilib, mahalliy sayt umuman ochilmay qolardi.
+# NEGA KODDA STANDART HOLDA O'CHIQ: bu loyihada DEBUG ishlab chiqishda ham
+# False, ya'ni mahalliy `runserver` ham «production» sozlamalari bilan
+# ishlaydi. `.env` da DJANGO_SSL_REDIRECT=0 bo'lgani uchun mahalliy sayt
+# ochiladi; aks holda http://127.0.0.1:8000 darhol https ga yo'naltirilardi.
 
 HTTPS_ORQALI = _bayroq('DJANGO_HTTPS', False)
 
