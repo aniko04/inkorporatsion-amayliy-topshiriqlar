@@ -20,8 +20,9 @@ from pathlib import Path
 
 from django.conf import settings
 
-# Zaxira nusxalar shu yerda. `.gitignore` da — git'ga tushmaydi.
-ZAXIRA_JILDI = Path(settings.BASE_DIR) / 'zaxira'
+# Zaxira nusxalar baza yonida — ma'lumot jildida (`core/settings.py`,
+# MALUMOT_JILDI; Docker'da volume ichida). `.gitignore` da — git'ga tushmaydi.
+ZAXIRA_JILDI = Path(getattr(settings, 'MALUMOT_JILDI', settings.BASE_DIR)) / 'zaxira'
 
 # Nechta nusxa saqlanadi (eskisi o'chib boradi).
 ENG_KOP_NUSXA = 14

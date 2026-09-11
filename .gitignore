@@ -227,6 +227,10 @@ logs/
 # Baza zaxira nusxalari (avtomatik olinadi, git'ga kirmaydi).
 zaxira/
 
+# Yig'ilgan statik fayllar (2026-09-11 dan git'da emas): Docker image ichida
+# `collectstatic` bilan quriladi; Docker'siz ishlatilsa — o'sha yerda yig'iladi.
+staticfiles/
+
 # --- Ish stoli ilovasi (.exe) ---
 # Manba (ilova.py, qur.py, belgi.ico, manzil.txt) git'ga kiradi;
 # qurish muhiti va yig'ilgan fayllar — yo'q (har safar qayta yaratiladi).

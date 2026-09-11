@@ -14,7 +14,6 @@ tzdata==2026.2
 
 # Serverda saytni ishga tushiradigan WSGI server. `manage.py runserver` faqat
 # ishlab chiqish uchun: bitta oqim, yuk ostida sinalmagan. Waitress toza
-# Python'da yozilgan, Windows'da ham Linux'da ham bir xil ishlaydi:
-#     python -m waitress --listen=127.0.0.1:8000 --threads=8 core.wsgi:application
-# Batafsil: DEPLOY.md
+# Python'da yozilgan, Windows'da ham Linux'da ham bir xil ishlaydi.
+# To'liq buyruq (proksi bayroqlari bilan) — Dockerfile, CMD. Batafsil: DEPLOY.md
 waitress==3.0.2

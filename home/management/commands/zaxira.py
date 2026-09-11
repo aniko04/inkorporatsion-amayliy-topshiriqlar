@@ -17,7 +17,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '--jild', default=None,
-            help="Nusxa saqlanadigan jild (standart: loyihadagi zaxira/).",
+            help="Nusxa saqlanadigan jild (standart: ma'lumot jildidagi zaxira/).",
         )
         parser.add_argument(
             '--royxat', action='store_true',

@@ -1,0 +1,40 @@
+# Image ichiga faqat kod, shablonlar, static/ va .env kiradi.
+# `.env` ATAYLAB kiradi: ichida sir yo'q, sozlamalar esa bitta — git'dagisi.
+
+# Git va muharrirlar
+.git
+.gitignore
+.gitattributes
+.vscode
+.idea
+.claude
+
+# Python
+**/__pycache__
+**/*.py[cod]
+env
+venv
+.venv
+
+# Ish vaqtidagi ma'lumot — volume orqali ulanadi (run.sh), image'ga kirmaydi
+db.sqlite3*
+.secret_key
+data
+logs
+zaxira
+media
+
+# Image ichida qaytadan yig'iladi (Dockerfile → collectstatic)
+staticfiles
+
+# Saytga aloqasi yo'q: mijozning asl fayllari, logotip manbasi, .exe ilova
+malumotlar
+logo
+ilova
+*.md
+
+# Deploy fayllari — image'ga kerak emas
+Dockerfile
+.dockerignore
+run.sh
+*.conf

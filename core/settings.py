@@ -61,11 +61,22 @@ def _royxat(nom, standart):
     return [b.strip() for b in qiymat.split(',') if b.strip()]
 
 
+# Ish vaqtida yoziladigan hamma narsa — baza, maxfiy kalit, zaxira nusxalar,
+# jurnal — shu bitta jildda. Standart: loyiha ildizi, ya'ni oddiy o'rnatishda
+# hech narsa o'zgarmaydi. Docker'da `/app/data` (Dockerfile beradi) — host'dagi
+# volume: konteyner qayta qurilganda baza ham, kalit ham joyida qoladi.
+MALUMOT_JILDI = Path(os.environ.get('DJANGO_DATA_DIR') or BASE_DIR)
+try:
+    MALUMOT_JILDI.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
+
+
 def _maxfiy_kalit():
     """SECRET_KEY ni topadi yoki bir marta yaratib, faylga saqlaydi.
 
-    Tartib: `DJANGO_SECRET_KEY` muhit o'zgaruvchisi → `.secret_key` fayli →
-    (fayl tizimi yozishga ruxsat bermasa) vaqtinchalik tasodifiy kalit.
+    Tartib: `DJANGO_SECRET_KEY` muhit o'zgaruvchisi → `MALUMOT_JILDI` dagi
+    `.secret_key` fayli → (yozishga ruxsat bo'lmasa) vaqtinchalik tasodifiy kalit.
 
     Shu sababli serverda hech narsa sozlamasdan ham kalit maxfiy bo'ladi:
     birinchi ishga tushishda `.secret_key` yaratiladi (u `.gitignore` da).
@@ -76,7 +87,7 @@ def _maxfiy_kalit():
     if kalit:
         return kalit
 
-    fayl = BASE_DIR / '.secret_key'
+    fayl = MALUMOT_JILDI / '.secret_key'
     try:
         saqlangan = fayl.read_text(encoding='utf-8').strip()
         if saqlangan:
@@ -132,7 +143,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # WhiteNoise: statik + media (Range, kesh) — izohi home/statik.py da.
+    'home.statik.StatikVaMedia',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -181,7 +193,7 @@ LOGIN_URL = '/login'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.environ.get('DJANGO_DB_PATH') or BASE_DIR / 'db.sqlite3',
+        'NAME': os.environ.get('DJANGO_DB_PATH') or MALUMOT_JILDI / 'db.sqlite3',
         'OPTIONS': {
             'init_command': (
                 "PRAGMA journal_mode=WAL;"
@@ -247,7 +259,9 @@ STORAGES = {
     },
 }
 
-# Media files
+# Media: kitoblar, videolar, admin paneldan yuklangan fayllar. Ularni ham
+# WhiteNoise beradi (home/statik.py) — har so'rovda diskdan, shuning uchun
+# yangi yuklangan fayl qayta ishga tushirmasdan ochiladi. Docker'da volume.
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -296,16 +310,17 @@ if HTTPS_ORQALI:
 # Qolgan sarlavhalar Django 5 da standart holda to'g'ri:
 #   SECURE_CONTENT_TYPE_NOSNIFF = True
 #   SECURE_REFERRER_POLICY = 'same-origin'
-#   X_FRAME_OPTIONS = 'DENY'  (media uchun core/urls.py da SAMEORIGIN)
+#   X_FRAME_OPTIONS = 'DENY'  (media uchun home/statik.py da SAMEORIGIN)
 
 
 # ---------------------------------------------------------------------------
 # Jurnal (log)
 # ---------------------------------------------------------------------------
 # DEBUG=False bo'lgani uchun xatolar ekranda ko'rinmaydi — ular jimgina 500
-# sahifasiga aylanadi. Shuning uchun ular `logs/xato.log` ga yoziladi.
+# sahifasiga aylanadi. Shuning uchun ular `logs/xato.log` ga yoziladi
+# (ma'lumot jildida; Docker'da ular `docker logs` da ham ko'rinadi).
 
-LOG_JILDI = BASE_DIR / 'logs'
+LOG_JILDI = MALUMOT_JILDI / 'logs'
 try:
     LOG_JILDI.mkdir(exist_ok=True)
     _log_yoziladi = True

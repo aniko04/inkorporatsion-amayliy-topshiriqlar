@@ -1,0 +1,5 @@
+# Shell skriptlar va Dockerfile har doim LF bilan. Bu kompyuterda
+# core.autocrlf=true — CRLF bilan chiqqan skriptni konteyner ichidagi `sh`
+# o'qiy olmaydi («set: Illegal option -», «\r: not found»).
+*.sh        text eol=lf
+Dockerfile  text eol=lf
